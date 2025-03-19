@@ -1,0 +1,73 @@
+package org.hy.microservice.plc;
+
+import com.pi4j.Pi4J;
+import com.pi4j.io.gpio.digital.DigitalOutput;
+import com.pi4j.platform.Platforms;
+
+
+
+
+
+/**
+ * 树莓派5的LED单灯3色控制
+ *
+ * @author      ZhengWei(HY)
+ * @createDate  2024-04-06
+ * @version     v1.0
+ */
+public class LEDControl
+{
+    private static final int $Pin_Red   = 23;
+    private static final int $Pin_Green = 24;
+    private static final int $Pin_Blue  = 25;
+    
+    private static DigitalOutput $IO_Red;
+    private static DigitalOutput $IO_Green;
+    private static DigitalOutput $IO_Blue;
+    
+
+    public static void main(String[] args) throws InterruptedException
+    {
+        var pi4j = Pi4J.newAutoContext();
+        
+        Platforms platforms = pi4j.platforms();
+        platforms.describe().print(System.out);
+
+        $IO_Red   = pi4j.digitalOutput().create($Pin_Red);
+        $IO_Green = pi4j.digitalOutput().create($Pin_Green);
+        $IO_Blue  = pi4j.digitalOutput().create($Pin_Blue);
+        
+        try
+        {
+            int v_Count = 0;
+            while ( v_Count < 100 )
+            {
+                System.out.println("红灯");
+                $IO_Red.high();
+                Thread.sleep(1000 * 3);
+                $IO_Red.low();
+                
+                System.out.println("绿灯");
+                $IO_Green.high();
+                Thread.sleep(1000 * 3);
+                $IO_Green.low();
+                
+                System.out.println("蓝灯");
+                $IO_Blue.high();
+                Thread.sleep(1000 * 3);
+                $IO_Blue.low();
+                
+                System.out.println("\n");
+                v_Count++;
+            }
+        }
+        catch (Exception exce)
+        {
+            exce.printStackTrace();
+        }
+        finally
+        {
+            pi4j.shutdown();
+        }
+    }
+}
