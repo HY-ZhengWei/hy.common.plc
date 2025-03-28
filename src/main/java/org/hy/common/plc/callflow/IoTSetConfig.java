@@ -69,6 +69,22 @@ public class IoTSetConfig extends NodeConfig implements NodeConfigBase
     
     
     /**
+     * 元素的类型
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2025-03-07
+     * @version     v1.0
+     *
+     * @return
+     */
+    public String getElementType()
+    {
+        return "IOTSET";
+    }
+    
+    
+    
+    /**
      * 获取：物联设备XID
      */
     public String getDeviceXID()
