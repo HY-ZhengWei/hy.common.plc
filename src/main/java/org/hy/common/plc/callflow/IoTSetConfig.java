@@ -1,11 +1,14 @@
 package org.hy.common.plc.callflow;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.hy.common.Help;
+import org.hy.common.Return;
 import org.hy.common.StringHelp;
 import org.hy.common.callflow.CallFlow;
 import org.hy.common.callflow.common.ValueHelp;
+import org.hy.common.callflow.execute.ExecuteElement;
 import org.hy.common.callflow.file.IToXml;
 import org.hy.common.callflow.node.NodeConfig;
 import org.hy.common.callflow.node.NodeConfigBase;
@@ -52,8 +55,35 @@ public class IoTSetConfig extends NodeConfig implements NodeConfigBase
     
     
     
+    /**
+     * 构造器
+     *
+     * @author      ZhengWei(HY)
+     * @createDate  2025-03-07
+     * @version     v1.0
+     *
+     */
     public IoTSetConfig()
     {
+        this(0L ,0L);
+    }
+    
+    
+    
+    /**
+     * 构造器
+     *
+     * @author      ZhengWei(HY)
+     * @createDate  2025-04-02
+     * @version     v1.0
+     *
+     * @param i_RequestTotal  累计的执行次数
+     * @param i_SuccessTotal  累计的执行成功次数
+     */
+    public IoTSetConfig(long i_RequestTotal ,long i_SuccessTotal)
+    {
+        super(i_RequestTotal ,i_SuccessTotal);
+        
         String v_CallObjectXID = "XIoTSet" + StringHelp.getUUID9n();
         this.callObject = new PLC();
         
@@ -371,6 +401,128 @@ public class IoTSetConfig extends NodeConfig implements NodeConfigBase
         v_Builder.append(".readDatas");
         
         return v_Builder.toString();
+    }
+    
+    
+    
+    /**
+     * 仅仅创建一个新的实例，没有任何赋值
+     * 
+     * 建议：子类重写此方法
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2025-04-02
+     * @version     v1.0
+     *
+     * @return
+     */
+    public Object newMy()
+    {
+        return new IoTSetConfig();
+    }
+    
+    
+    
+    /**
+     * 浅克隆，只克隆自己，不克隆路由。
+     * 
+     * 注：不克隆XID。
+     * 
+     * 建议：子类重写此方法
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2025-04-02
+     * @version     v1.0
+     *
+     */
+    public Object cloneMyOnly()
+    {
+        IoTSetConfig v_Clone = new IoTSetConfig();
+        
+        this.cloneMyOnly(v_Clone);
+        v_Clone.setTimeout(this.getTimeout());
+        v_Clone.setContext(this.getContext());
+        v_Clone.deviceXID = this.deviceXID;
+        v_Clone.setDatagramXID(this.getDatagramXID()); 
+        v_Clone.setDataXID(this.getDataXID());
+        
+        return v_Clone;
+    }
+    
+    
+    
+    /**
+     * 深度克隆编排元素
+     * 
+     * 建议：子类重写此方法
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2025-04-02
+     * @version     v1.0
+     *
+     * @param io_Clone        克隆的复制品对象
+     * @param i_ReplaceXID    要被替换掉的XID中的关键字（可为空）
+     * @param i_ReplaceByXID  新的XID内容，替换为的内容（可为空）
+     * @param i_AppendXID     替换后，在XID尾追加的内容（可为空）
+     * @param io_XIDObjects   已实例化的XID对象。Map.key为XID值
+     * @return
+     */
+    public void clone(Object io_Clone ,String i_ReplaceXID ,String i_ReplaceByXID ,String i_AppendXID ,Map<String ,ExecuteElement> io_XIDObjects)
+    {
+        if ( Help.isNull(this.xid) )
+        {
+            throw new NullPointerException("Clone IoTSetConfig xid is null.");
+        }
+        
+        IoTSetConfig v_Clone = (IoTSetConfig) io_Clone;
+        ((ExecuteElement) this).clone(v_Clone ,i_ReplaceXID ,i_ReplaceByXID ,i_AppendXID ,io_XIDObjects);
+        
+        v_Clone.setTimeout(this.getTimeout());
+        v_Clone.setContext(this.getContext());
+        v_Clone.deviceXID = this.deviceXID;
+        v_Clone.setDatagramXID(this.getDatagramXID()); 
+        v_Clone.setDataXID(this.getDataXID());
+    }
+    
+    
+    
+    /**
+     * 深度克隆编排元素
+     * 
+     * 建议：子类重写此方法
+     *
+     * @author      ZhengWei(HY)
+     * @createDate  2025-04-02
+     * @version     v1.0
+     *
+     * @return
+     * @throws CloneNotSupportedException
+     *
+     * @see java.lang.Object#clone()
+     */
+    public Object clone() throws CloneNotSupportedException
+    {
+        if ( Help.isNull(this.xid) )
+        {
+            throw new NullPointerException("Clone IoTSetConfig xid is null.");
+        }
+        
+        Map<String ,ExecuteElement> v_XIDObjects = new HashMap<String ,ExecuteElement>();
+        Return<String>              v_Version    = parserXIDVersion(this.xid);
+        IoTSetConfig                v_Clone      = new IoTSetConfig();
+        
+        if ( v_Version.booleanValue() )
+        {
+            this.clone(v_Clone ,v_Version.getParamStr() ,XIDVersion + (v_Version.getParamInt() + 1) ,""         ,v_XIDObjects);
+        }
+        else
+        {
+            this.clone(v_Clone ,""                      ,""                                         ,XIDVersion ,v_XIDObjects);
+        }
+        
+        v_XIDObjects.clear();
+        v_XIDObjects = null;
+        return v_Clone;
     }
     
 }
