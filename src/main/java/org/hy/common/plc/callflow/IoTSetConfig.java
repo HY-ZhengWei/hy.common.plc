@@ -132,6 +132,8 @@ public class IoTSetConfig extends NodeConfig implements NodeConfigBase
     public void setDeviceXID(String i_DeviceXID)
     {
         this.deviceXID = ValueHelp.standardRefID(i_DeviceXID);
+        this.reset(this.getRequestTotal() ,this.getSuccessTotal());
+        this.keyChange();
     }
 
 
@@ -154,6 +156,8 @@ public class IoTSetConfig extends NodeConfig implements NodeConfigBase
     public void setDatagramXID(String i_DatagramXID)
     {
         this.callObject.setDatagramXID(ValueHelp.standardValueID(i_DatagramXID));
+        this.reset(this.getRequestTotal() ,this.getSuccessTotal());
+        this.keyChange();
     }
 
 
@@ -176,6 +180,8 @@ public class IoTSetConfig extends NodeConfig implements NodeConfigBase
     public void setDataXID(String i_DataXID)
     {
         this.callParam.setValue(i_DataXID);
+        this.reset(this.getRequestTotal() ,this.getSuccessTotal());
+        this.keyChange();
     }
     
     
@@ -198,6 +204,8 @@ public class IoTSetConfig extends NodeConfig implements NodeConfigBase
     public void setDataDefault(String i_DataDefault)
     {
         this.callParam.setValueDefault(i_DataDefault);
+        this.reset(this.getRequestTotal() ,this.getSuccessTotal());
+        this.keyChange();
     }
 
 
