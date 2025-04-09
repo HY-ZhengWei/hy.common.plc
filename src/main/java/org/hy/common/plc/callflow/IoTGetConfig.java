@@ -224,9 +224,9 @@ public class IoTGetConfig extends NodeConfig implements NodeConfigBase
      */
     public void toXmlContent(StringBuilder io_Xml ,int i_Level ,String i_Level1 ,String i_LevelN ,String i_SuperTreeID ,String i_TreeID)
     {
-        if ( !Help.isNull(this.callObject.getPlcXID()) )
+        if ( !Help.isNull(this.deviceXID) )
         {
-            io_Xml.append("\n").append(i_LevelN).append(i_Level1).append(IToXml.toValue("deviceXID" ,this.getDeviceXID()));
+            io_Xml.append("\n").append(i_LevelN).append(i_Level1).append(IToXml.toValue("deviceXID" ,this.deviceXID));
         }
         if ( !Help.isNull(this.callObject.getDatagramXID()) )
         {
@@ -330,7 +330,7 @@ public class IoTGetConfig extends NodeConfig implements NodeConfigBase
             v_Builder.append(DBSQL.$Placeholder).append(this.returnID).append(" = ");
         }
         
-        if ( Help.isNull(this.callObject.getPlcXID()) )
+        if ( Help.isNull(this.deviceXID) )
         {
             v_Builder.append("?");
         }
@@ -341,7 +341,7 @@ public class IoTGetConfig extends NodeConfig implements NodeConfigBase
         
         v_Builder.append(".");
         
-        if ( Help.isNull(this.callObject.getDatagramXID()) )
+        if ( Help.isNull(this.getDatagramXID()) )
         {
             v_Builder.append("?");
         }
