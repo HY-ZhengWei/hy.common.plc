@@ -127,9 +127,9 @@ public class IoTGetConfig extends NodeConfig implements NodeConfigBase
         this.reset(this.getRequestTotal() ,this.getSuccessTotal());
         this.keyChange();
     }
-
-
-
+    
+    
+    
     /**
      * 获取：数据报文XID
      */
@@ -137,7 +137,17 @@ public class IoTGetConfig extends NodeConfig implements NodeConfigBase
     {
         return DBSQL.$Placeholder + this.callObject.getDatagramXID();
     }
-
+    
+    
+    
+    /**
+     * 获取：数据报文XID
+     */
+    private String gatDatagramXID()
+    {
+        return this.callObject.getDatagramXID();
+    }
+    
 
     
     /**
@@ -286,13 +296,13 @@ public class IoTGetConfig extends NodeConfig implements NodeConfigBase
         
         v_Builder.append(".");
         
-        if ( Help.isNull(this.callObject.getDatagramXID()) )
+        if ( Help.isNull(this.gatDatagramXID()) )
         {
             v_Builder.append("?");
         }
         else
         {
-            if ( XJava.getObject(this.callObject.getDatagramXID()) != null )
+            if ( XJava.getObject(this.gatDatagramXID()) != null )
             {
                 v_Builder.append(this.getDatagramXID());
             }
@@ -341,7 +351,7 @@ public class IoTGetConfig extends NodeConfig implements NodeConfigBase
         
         v_Builder.append(".");
         
-        if ( Help.isNull(this.getDatagramXID()) )
+        if ( Help.isNull(this.gatDatagramXID()) )
         {
             v_Builder.append("?");
         }

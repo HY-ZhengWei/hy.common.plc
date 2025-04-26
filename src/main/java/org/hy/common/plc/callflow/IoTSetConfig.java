@@ -145,6 +145,16 @@ public class IoTSetConfig extends NodeConfig implements NodeConfigBase
     {
         return DBSQL.$Placeholder + this.callObject.getDatagramXID();
     }
+    
+    
+    
+    /**
+     * 获取：数据报文XID
+     */
+    private String gatDatagramXID()
+    {
+        return this.callObject.getDatagramXID();
+    }
 
 
     
@@ -280,21 +290,23 @@ public class IoTSetConfig extends NodeConfig implements NodeConfigBase
      */
     public void toXmlContent(StringBuilder io_Xml ,int i_Level ,String i_Level1 ,String i_LevelN ,String i_SuperTreeID ,String i_TreeID)
     {
+        String v_NewSpace = "\n" + i_LevelN + i_Level1;
+        
         if ( !Help.isNull(this.deviceXID) )
         {
-            io_Xml.append("\n").append(i_LevelN).append(i_Level1).append(IToXml.toValue("deviceXID" ,this.deviceXID));
+            io_Xml.append(v_NewSpace).append(IToXml.toValue("deviceXID" ,this.deviceXID));
         }
         if ( !Help.isNull(this.getDatagramXID()) )
         {
-            io_Xml.append("\n").append(i_LevelN).append(i_Level1).append(IToXml.toValue("datagramXID" ,this.getDatagramXID()));
+            io_Xml.append(v_NewSpace).append(IToXml.toValue("datagramXID" ,this.getDatagramXID()));
         }
         if ( !Help.isNull(this.getDataXID()) )
         {
-            io_Xml.append("\n").append(i_LevelN).append(i_Level1).append(IToXml.toValue("dataXID" ,this.getDataXID()));
+            io_Xml.append(v_NewSpace).append(IToXml.toValue("dataXID" ,this.getDataXID()));
         }
         if ( !Help.isNull(this.getDataDefault()) )
         {
-            io_Xml.append("\n").append(i_LevelN).append(i_Level1).append(IToXml.toValue("dataDefault" ,this.getDataDefault()));
+            io_Xml.append(v_NewSpace).append(IToXml.toValue("dataDefault" ,this.getDataDefault() ,v_NewSpace));
         }
     }
     
@@ -350,13 +362,13 @@ public class IoTSetConfig extends NodeConfig implements NodeConfigBase
         
         v_Builder.append(".");
         
-        if ( Help.isNull(this.getDatagramXID()) )
+        if ( Help.isNull(this.gatDatagramXID()) )
         {
             v_Builder.append("?");
         }
         else
         {
-            if ( XJava.getObject(this.getDatagramXID()) != null )
+            if ( XJava.getObject(this.gatDatagramXID()) != null )
             {
                 v_Builder.append(this.getDatagramXID());
             }
@@ -405,7 +417,7 @@ public class IoTSetConfig extends NodeConfig implements NodeConfigBase
         
         v_Builder.append(".");
         
-        if ( Help.isNull(this.getDatagramXID()) )
+        if ( Help.isNull(this.gatDatagramXID()) )
         {
             v_Builder.append("?");
         }

@@ -6,7 +6,7 @@
 
     <groupId>cn.openapis</groupId>
     <artifactId>hy.common.plc</artifactId>
-    <version>1.0.4</version>
+    <version>1.0.5</version>
     <packaging>jar</packaging>
 
     <name>cn.openapis.hy.common.plc</name>
@@ -55,7 +55,7 @@
         <dependency>
             <groupId>cn.openapis</groupId>
             <artifactId>hy.common.base</artifactId>
-            <version>1.0.194</version>
+            <version>1.0.195</version>
             <scope>provided</scope>
         </dependency>
 
@@ -110,7 +110,7 @@
         <dependency>
             <groupId>cn.openapis</groupId>
             <artifactId>hy.common.callflow</artifactId>
-            <version>1.1.1</version>
+            <version>1.1.5</version>
             <scope>provided</scope>
         </dependency>
         
