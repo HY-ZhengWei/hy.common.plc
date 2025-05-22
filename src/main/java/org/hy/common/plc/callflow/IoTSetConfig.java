@@ -1,6 +1,7 @@
 package org.hy.common.plc.callflow;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.hy.common.Help;
@@ -15,6 +16,8 @@ import org.hy.common.callflow.node.NodeConfigBase;
 import org.hy.common.callflow.node.NodeParam;
 import org.hy.common.db.DBSQL;
 import org.hy.common.plc.PLC;
+import org.hy.common.plc.data.PLCDataItemConfig;
+import org.hy.common.plc.data.PLCDatagramConfig;
 import org.hy.common.xml.XJava;
 import org.hy.common.xml.log.Logger;
 
@@ -233,6 +236,7 @@ public class IoTSetConfig extends NodeConfig implements NodeConfigBase
      * @param io_ExecuteReturn  执行结果。已用NodeConfig自己的力量获取了执行结果。
      * @return
      */
+    @SuppressWarnings("unchecked")
     public Object [] generateParams(Map<String ,Object> io_Context ,Object [] io_Params)
     {
         String v_DeviceXID = null;
@@ -240,6 +244,16 @@ public class IoTSetConfig extends NodeConfig implements NodeConfigBase
         {
             v_DeviceXID = (String) ValueHelp.getValue(this.deviceXID ,String.class ,null ,io_Context);
             this.callObject.setPlcXID(v_DeviceXID);
+            
+            Map<String ,Object> v_PLCParams = (Map<String ,Object>) io_Params[0];
+            
+            PLCDatagramConfig       v_XDatagram = (PLCDatagramConfig) XJava.getObject(this.gatDatagramXID());
+            List<PLCDataItemConfig> v_Items     = v_XDatagram.getItems();
+            for (PLCDataItemConfig v_Item : v_Items)
+            {
+                v_PLCParams.get(v_Item.getCode());
+            }
+            
             return io_Params;
         }
         catch (Exception exce)
@@ -302,7 +316,7 @@ public class IoTSetConfig extends NodeConfig implements NodeConfigBase
         }
         if ( !Help.isNull(this.getDataXID()) )
         {
-            io_Xml.append(v_NewSpace).append(IToXml.toValue("dataXID" ,this.getDataXID()));
+            io_Xml.append(v_NewSpace).append(IToXml.toValue("dataXID" ,this.getDataXID() ,v_NewSpace));
         }
         if ( !Help.isNull(this.getDataDefault()) )
         {

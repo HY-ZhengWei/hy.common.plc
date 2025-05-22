@@ -114,7 +114,7 @@ public class PLC
                 }
             }
             
-            List<PLCDataItemConfig>       v_Items              = v_XDatagram.getItems();
+            List<PLCDataItemConfig> v_Items              = v_XDatagram.getItems();
             PlcWriteRequest.Builder v_PlcWriteReqBuilder = v_XPLC.getPlcConnect().writeRequestBuilder();
             int                     v_ItemCount          = 0;
             
