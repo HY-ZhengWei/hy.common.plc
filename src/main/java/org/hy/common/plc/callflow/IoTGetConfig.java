@@ -403,7 +403,6 @@ public class IoTGetConfig extends NodeConfig implements NodeConfigBase
         
         this.cloneMyOnly(v_Clone);
         v_Clone.setTimeout(this.getTimeout());
-        v_Clone.setContext(this.getContext());
         v_Clone.deviceXID = this.deviceXID;
         v_Clone.setDatagramXID(this.getDatagramXID()); 
         
@@ -439,7 +438,6 @@ public class IoTGetConfig extends NodeConfig implements NodeConfigBase
         ((ExecuteElement) this).clone(v_Clone ,i_ReplaceXID ,i_ReplaceByXID ,i_AppendXID ,io_XIDObjects);
         
         v_Clone.setTimeout(this.getTimeout());
-        v_Clone.setContext(this.getContext());
         v_Clone.deviceXID = this.deviceXID;
         v_Clone.setDatagramXID(this.getDatagramXID()); 
     }

@@ -247,7 +247,12 @@ public class IoTSetConfig extends NodeConfig implements NodeConfigBase
             
             Map<String ,Object> v_PLCParams = (Map<String ,Object>) io_Params[0];
             
-            PLCDatagramConfig       v_XDatagram = (PLCDatagramConfig) XJava.getObject(this.gatDatagramXID());
+            PLCDatagramConfig  v_XDatagram = (PLCDatagramConfig) XJava.getObject(this.gatDatagramXID());
+            if ( v_XDatagram == null )
+            {
+                throw new NullPointerException(this.getDatagramXID() + " is not exists.");
+            }
+            
             List<PLCDataItemConfig> v_Items     = v_XDatagram.getItems();
             for (PLCDataItemConfig v_Item : v_Items)
             {
@@ -258,8 +263,8 @@ public class IoTSetConfig extends NodeConfig implements NodeConfigBase
         }
         catch (Exception exce)
         {
-            $Logger.error(exce);
-            throw new RuntimeException(exce);
+            $Logger.error(this.getXid() ,exce);
+            throw new RuntimeException(this.getXid() ,exce);
         }
     }
     
@@ -483,7 +488,6 @@ public class IoTSetConfig extends NodeConfig implements NodeConfigBase
         
         this.cloneMyOnly(v_Clone);
         v_Clone.setTimeout(this.getTimeout());
-        v_Clone.setContext(this.getContext());
         v_Clone.deviceXID = this.deviceXID;
         v_Clone.setDatagramXID(this.getDatagramXID()); 
         v_Clone.setDataXID(this.getDataXID());
@@ -520,7 +524,6 @@ public class IoTSetConfig extends NodeConfig implements NodeConfigBase
         ((ExecuteElement) this).clone(v_Clone ,i_ReplaceXID ,i_ReplaceByXID ,i_AppendXID ,io_XIDObjects);
         
         v_Clone.setTimeout(this.getTimeout());
-        v_Clone.setContext(this.getContext());
         v_Clone.deviceXID = this.deviceXID;
         v_Clone.setDatagramXID(this.getDatagramXID()); 
         v_Clone.setDataXID(this.getDataXID());
