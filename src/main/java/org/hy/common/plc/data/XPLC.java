@@ -40,6 +40,13 @@ public class XPLC implements XJavaID ,Serializable
     
     
     
+    public XPLC(PLCConfig i_PLCDeviceConfig)
+    {
+        this(i_PLCDeviceConfig ,i_PLCDeviceConfig);
+    }
+    
+    
+    
     public XPLC(Object i_Config ,PLCConfig i_PLCDeviceConfig)
     {
         this.config    = i_Config;
@@ -89,7 +96,8 @@ public class XPLC implements XJavaID ,Serializable
         
         try
         {
-            // 机架号0和插槽号1  ?rack=0&slot=1
+            // 机架号0和插槽号1。在 Siemens 自有软件中的 rack=0&slot=1 
+            // PLC4X 或类似的第三方库，正确的格式是 remote-rack&remote-slot
             // 立体仓库   10.1.154.112
             // WYS71200 10.1.154.131、10.1.154.132 
             // 格式为 s7://username:password@IP:Port?timeout=5000
@@ -109,6 +117,15 @@ public class XPLC implements XJavaID ,Serializable
             v_ConnString.append(this.plcConfig.getPort());
             v_ConnString.append("?timeout=").append(this.plcConfig.getTimeout());
             
+            if ( this.plcConfig.getRack() != null )
+            {
+                v_ConnString.append("&remote-rack=").append(this.plcConfig.getRack());
+            }
+            if ( this.plcConfig.getSlot() != null )
+            {
+                v_ConnString.append("&remote-slot=").append(this.plcConfig.getSlot());
+            }
+            
             PlcDriverManager     v_PlcDriverManager     = PlcDriverManager.getDefault();
             PlcConnectionManager v_PlcConnectionManager = v_PlcDriverManager.getConnectionManager();
             PlcConnection        v_PLCConn              = v_PlcConnectionManager.getConnection(v_ConnString.toString());
@@ -127,6 +144,44 @@ public class XPLC implements XJavaID ,Serializable
         }
         
         return false;
+    }
+    
+    
+    
+    /**
+     * 是否已连接成功
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2025-08-04
+     * @version     v1.0
+     *
+     * @return
+     */
+    public boolean isConnected()
+    {
+        return this.plcConnect.isConnected();
+    }
+    
+    
+    
+    /**
+     * 关闭连接
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2025-08-04
+     * @version     v1.0
+     *
+     */
+    public void close()
+    {
+        try
+        {
+            this.plcConnect.close();
+        }
+        catch (Exception exce)
+        {
+            $Logger.error(this.plcConfig.getXid() + " 连接关闭时异常" ,exce);
+        }
     }
     
     
