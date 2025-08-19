@@ -1,6 +1,5 @@
 package org.hy.common.plc.data;
 
-import org.apache.plc4x.java.api.PlcConnection;
 import org.hy.common.XJavaID;
 
 
@@ -18,13 +17,16 @@ public class PLCConfig implements XJavaID
 {
     
     /** 默认协议 */
-    public static final String $Protocol = "s7";
+    public static final String $Protocol         = "s7";
+    
+    /** Smart200协议 */
+    public static final String $ProtocolSmart200 = "s7 Smart200";
     
     /** 默认端口 */
-    public static final int    $Port     = 102;
+    public static final int    $Port             = 102;
     
     /** 默认超时时长。单位：毫秒 */
-    public static final int    $Timeout  = 5000;
+    public static final int    $Timeout          = 5000;
     
     
     
@@ -43,6 +45,12 @@ public class PLCConfig implements XJavaID
     /** 协议类型 */
     private String        protocol;
     
+    /** 逻辑机架编号。从0开始编号 */
+    private Integer       rack;
+    
+    /** 槽位。从1开始编号 */
+    private Integer       slot;
+    
     /** 超时时长。单位：毫秒 */
     private Integer       timeout;
     
@@ -51,9 +59,6 @@ public class PLCConfig implements XJavaID
     
     /** 连接访问密码 */
     private String        userPassword;
-    
-    /** PLC设备的连接对象 */
-    private PlcConnection plcConnect;
     
     
     
@@ -138,6 +143,46 @@ public class PLCConfig implements XJavaID
 
     
     /**
+     * 获取：逻辑机架编号。从0开始编号
+     */
+    public Integer getRack()
+    {
+        return rack;
+    }
+
+    
+    /**
+     * 设置：逻辑机架编号。从0开始编号
+     * 
+     * @param i_Rack 逻辑机架编号。从0开始编号
+     */
+    public void setRack(Integer i_Rack)
+    {
+        this.rack = i_Rack;
+    }
+
+    
+    /**
+     * 获取：槽位。从1开始编号
+     */
+    public Integer getSlot()
+    {
+        return slot;
+    }
+
+    
+    /**
+     * 设置：槽位。从1开始编号
+     * 
+     * @param i_Slot 槽位。从1开始编号
+     */
+    public void setSlot(Integer i_Slot)
+    {
+        this.slot = i_Slot;
+    }
+
+
+    /**
      * 获取：超时时长。单位：毫秒
      */
     public Integer getTimeout()
@@ -197,26 +242,6 @@ public class PLCConfig implements XJavaID
     }
     
     
-    /**
-     * 获取：PLC设备的连接对象
-     */
-    public PlcConnection getPlcConnect()
-    {
-        return plcConnect;
-    }
-
-    
-    /**
-     * 设置：PLC设备的连接对象
-     * 
-     * @param i_PlcConnect PLC设备的连接对象
-     */
-    public void setPlcConnect(PlcConnection i_PlcConnect)
-    {
-        this.plcConnect = i_PlcConnect;
-    }
-
-
     /**
      * 设置XJava池中对象的ID标识。此方法不用用户调用设置值，是自动的。
      * 

@@ -10,7 +10,7 @@ cd .\target\classes
 rd /s/q .\org\hy\common\plc\junit
 
 
-jar cvfm hy.common.plc.jar META-INF/MANIFEST.MF META-INF org
+jar cvfm hy.common.plc.jar META-INF/MANIFEST.MF META-INF org Moka7
 
 copy hy.common.plc.jar ..\..
 del /q hy.common.plc.jar
@@ -22,7 +22,7 @@ cd ..\..
 
 cd .\src\main\java
 xcopy /S ..\resources\* .
-jar cvfm hy.common.plc-sources.jar META-INF\MANIFEST.MF META-INF org
+jar cvfm hy.common.plc-sources.jar META-INF\MANIFEST.MF META-INF org Moka7
 copy hy.common.plc-sources.jar ..\..\..
 del /Q hy.common.plc-sources.jar
 rd /s/q META-INF

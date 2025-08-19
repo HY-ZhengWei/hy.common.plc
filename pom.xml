@@ -6,7 +6,7 @@
 
     <groupId>cn.openapis</groupId>
     <artifactId>hy.common.plc</artifactId>
-    <version>1.0.7</version>
+    <version>1.0.8</version>
     <packaging>jar</packaging>
 
     <name>cn.openapis.hy.common.plc</name>
@@ -55,7 +55,7 @@
         <dependency>
             <groupId>cn.openapis</groupId>
             <artifactId>hy.common.base</artifactId>
-            <version>1.0.201</version>
+            <version>1.0.202</version>
             <scope>provided</scope>
         </dependency>
 
@@ -96,7 +96,7 @@
         <dependency>
             <groupId>cn.openapis</groupId>
             <artifactId>hy.common.xjava</artifactId>
-            <version>4.5.9</version>
+            <version>4.6.2</version>
             <scope>provided</scope>
         </dependency>
         
@@ -110,7 +110,7 @@
         <dependency>
             <groupId>cn.openapis</groupId>
             <artifactId>hy.common.callflow</artifactId>
-            <version>1.3.0</version>
+            <version>1.3.6</version>
             <scope>provided</scope>
         </dependency>
         
@@ -232,7 +232,7 @@
             <plugin>
                 <groupId>org.sonatype.central</groupId>
                 <artifactId>central-publishing-maven-plugin</artifactId>
-                <version>0.6.0</version>
+                <version>0.8.0</version>
                 <extensions>true</extensions>
                 <configuration>
                     <publishingServerId>central</publishingServerId>
