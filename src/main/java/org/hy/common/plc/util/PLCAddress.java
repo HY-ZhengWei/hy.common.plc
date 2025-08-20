@@ -10,6 +10,8 @@ import org.hy.common.plc.enums.PLCRegisterType;
 /**
  * PLC通讯数据地址的工具类。
  * 
+ * 主要用于：S7-200 Smart
+ * 
  *   将M16.0  地址分解的值项：M  空  16  0
  *   将DBW34.0地址分解的值项：DB  W  34  0
  *
@@ -23,8 +25,11 @@ public class PLCAddress
     /** 寄存器类型 */
     private PLCRegisterType registerType;
     
-    /** 数据类型 */
-    private String          dataType;
+    /** 寄存器编号 */
+    private Integer         registerNo;
+    
+    /** 数据类型编码 */
+    private String          dataTypeCode;
     
     /** 偏移量：字节的偏移量 */
     private Integer         offsetByte;
@@ -34,7 +39,7 @@ public class PLCAddress
     
     
     
-    public PLCAddress(String i_Address)
+    public PLCAddress(Integer i_RegisterNo ,String i_Address)
     {
         if ( Help.isNull(i_Address) )
         {
@@ -58,6 +63,23 @@ public class PLCAddress
             {
                 this.registerType = v_Enum;
                 v_Address = v_Address.substring(v_Len);
+                
+                if ( PLCRegisterType.Memory.equals(this.registerType)
+                  || PLCRegisterType.Input .equals(this.registerType)
+                  || PLCRegisterType.Output.equals(this.registerType) )
+                {
+                    // 对于其他区域(M、I、Q等)，DBNumber参数被忽略，通常设置为0
+                    this.registerNo = 0;
+                }
+                else
+                {
+                    if ( i_RegisterNo == null || i_RegisterNo < 0 )
+                    {
+                        throw new RuntimeException("Address[" + i_Address + "] RegisterNo[" + i_RegisterNo + "] invaild.");
+                    }
+                    this.registerNo = i_RegisterNo;
+                }
+                
                 break;
             }
         }
@@ -71,12 +93,12 @@ public class PLCAddress
         char v_DataType = v_Address.charAt(0);
         if ( 'A' <= v_DataType && v_DataType <= 'Z' )
         {
-            this.dataType = v_Address.substring(0 ,1);
+            this.dataTypeCode = v_Address.substring(0 ,1);
             v_Address = v_Address.substring(1);
         }
         else if ( '0' <= v_DataType && v_DataType <= '9' )
         {
-            this.dataType = "";
+            this.dataTypeCode = "";
         }
         else
         {
@@ -102,7 +124,6 @@ public class PLCAddress
         }
     }
     
-
     
     /**
      * 获取：寄存器类型
@@ -111,14 +132,23 @@ public class PLCAddress
     {
         return registerType;
     }
+    
+    
+    /**
+     * 获取：寄存器编号
+     */
+    public Integer getRegisterNo()
+    {
+        return registerNo;
+    }
 
     
     /**
-     * 获取：数据类型
+     * 获取：数据类型编码
      */
-    public String getDataType()
+    public String getDataTypeCode()
     {
-        return dataType;
+        return dataTypeCode;
     }
 
 
@@ -154,7 +184,16 @@ public class PLCAddress
     @Override
     public String toString()
     {
-        return this.registerType.getCode() + this.dataType + this.offsetByte + "." + this.offsetBit;
+        StringBuilder v_Builder = new StringBuilder();
+        v_Builder.append("%").append(this.registerType.getCode());
+        v_Builder.append(this.registerNo);
+        v_Builder.append(".");
+        v_Builder.append(this.registerType.getCode());
+        v_Builder.append(this.dataTypeCode);
+        v_Builder.append(this.offsetByte);
+        v_Builder.append(".");
+        v_Builder.append(this.offsetBit);
+        return  v_Builder.toString();
     }
     
 }
