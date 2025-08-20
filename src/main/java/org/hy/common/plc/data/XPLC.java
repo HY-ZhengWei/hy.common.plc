@@ -2,11 +2,12 @@ package org.hy.common.plc.data;
 
 import java.io.Serializable;
 
-import org.apache.plc4x.java.api.PlcConnection;
-import org.apache.plc4x.java.api.PlcConnectionManager;
-import org.apache.plc4x.java.api.PlcDriverManager;
 import org.hy.common.Help;
 import org.hy.common.XJavaID;
+import org.hy.common.plc.enums.PLCProtocolType;
+import org.hy.common.plc.io.IPlcIO;
+import org.hy.common.plc.io.PlcIO4X;
+import org.hy.common.plc.io.PlcIOS200;
 import org.hy.common.xml.log.Logger;
 
 
@@ -30,13 +31,13 @@ public class XPLC implements XJavaID ,Serializable
     
     
     /** 外界自定义的配置信息 */
-    private Object        config;
+    private Object    config;
     
     /** PLC设备配置 */
-    private PLCConfig     plcConfig;
+    private PLCConfig plcConfig;
     
-    /** PLC设备的连接对象 */
-    private PlcConnection plcConnect;
+    /** 统一多个组件的PLC连接、读、写等操作 */
+    private IPlcIO    plcIO;
     
     
     
@@ -80,70 +81,16 @@ public class XPLC implements XJavaID ,Serializable
             return false;
         }
         
-        if ( Help.isNull(this.plcConfig.getHost()) )
+        if ( PLCProtocolType.S7_200_Smart.equals(PLCProtocolType.get(this.plcConfig.getProtocol())) )
         {
-            Exception v_Error = new NullPointerException("PLC[" + this.plcConfig.getXid() + "]'s Host is null.");
-            $Logger.error(v_Error);
-            return false;
+            this.plcIO = new PlcIOS200(this.plcConfig);
+        }
+        else
+        {
+            this.plcIO = new PlcIO4X(this.plcConfig);
         }
         
-        if ( Help.isNull(this.plcConfig.getPort()) )
-        {
-            Exception v_Error = new NullPointerException("PLC[" + this.plcConfig.getXid() + "]'s Port is null.");
-            $Logger.error(v_Error);
-            return false;
-        }
-        
-        try
-        {
-            // 机架号0和插槽号1。在 Siemens 自有软件中的 rack=0&slot=1 
-            // PLC4X 或类似的第三方库，正确的格式是 remote-rack&remote-slot
-            // 立体仓库   10.1.154.112
-            // WYS71200 10.1.154.131、10.1.154.132 
-            // 格式为 s7://username:password@IP:Port?timeout=5000
-            // {protocol-code}:({transport-code})?//{transport-address}(?{parameter-string})?'
-            StringBuilder v_ConnString = new StringBuilder();
-            v_ConnString.append(this.plcConfig.getProtocol()).append("://");
-            if ( !Help.isNull(this.plcConfig.getUserName()) && !Help.isNull(this.plcConfig.getUserPassword()) )
-            {
-                v_ConnString.append(this.plcConfig.getUserName());
-                v_ConnString.append(":");
-                v_ConnString.append(this.plcConfig.getUserPassword());
-                v_ConnString.append("@");
-            }
-            
-            v_ConnString.append(this.plcConfig.getHost());
-            v_ConnString.append(":");
-            v_ConnString.append(this.plcConfig.getPort());
-            v_ConnString.append("?timeout=").append(this.plcConfig.getTimeout());
-            
-            if ( this.plcConfig.getRack() != null )
-            {
-                v_ConnString.append("&remote-rack=").append(this.plcConfig.getRack());
-            }
-            if ( this.plcConfig.getSlot() != null )
-            {
-                v_ConnString.append("&remote-slot=").append(this.plcConfig.getSlot());
-            }
-            
-            PlcDriverManager     v_PlcDriverManager     = PlcDriverManager.getDefault();
-            PlcConnectionManager v_PlcConnectionManager = v_PlcDriverManager.getConnectionManager();
-            PlcConnection        v_PLCConn              = v_PlcConnectionManager.getConnection(v_ConnString.toString());
-            if ( !v_PLCConn.getMetadata().isReadSupported() )
-            {
-                $Logger.error("PLC[" + this.plcConfig.getXid() + "] connection doesn't support reading.");
-                return false;
-            }
-            
-            this.plcConnect = v_PLCConn;
-            return true;
-        }
-        catch (Exception exce)
-        {
-            $Logger.error("PLC[" + this.plcConfig.getXid() + "] connection error." ,exce);
-        }
-        
-        return false;
+        return this.plcIO.connect();
     }
     
     
@@ -159,7 +106,7 @@ public class XPLC implements XJavaID ,Serializable
      */
     public boolean isConnected()
     {
-        return this.plcConnect.isConnected();
+        return this.plcIO.isConnected();
     }
     
     
@@ -174,14 +121,7 @@ public class XPLC implements XJavaID ,Serializable
      */
     public void close()
     {
-        try
-        {
-            this.plcConnect.close();
-        }
-        catch (Exception exce)
-        {
-            $Logger.error(this.plcConfig.getXid() + " 连接关闭时异常" ,exce);
-        }
+        this.plcIO.close();
     }
     
     
@@ -237,11 +177,11 @@ public class XPLC implements XJavaID ,Serializable
     
     
     /**
-     * 获取：PLC设备的连接对象
+     * 获取：统一多个组件的PLC连接、读、写等操作
      */
-    public PlcConnection getPlcConnect()
+    public IPlcIO getPlcIO()
     {
-        return plcConnect;
+        return plcIO;
     }
     
     

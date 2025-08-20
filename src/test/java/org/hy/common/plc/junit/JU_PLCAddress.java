@@ -20,15 +20,15 @@ public class JU_PLCAddress
     @Test
     public void test_PLCAddress()
     {
-        System.out.println(new PLCAddress("DBB1.0"));
-        System.out.println(new PLCAddress("DBB20.0"));
-        System.out.println(new PLCAddress("DBB30.1"));
-        System.out.println(new PLCAddress("DBB400"));
-        System.out.println(new PLCAddress("DBW0.0"));
-        System.out.println(new PLCAddress("DBW0"));
-        System.out.println(new PLCAddress("M16"));
-        System.out.println(new PLCAddress("M16.0"));
-        System.out.println(new PLCAddress("MX16.0"));
+        System.out.println(new PLCAddress(1 ,"DBB1.0"));
+        System.out.println(new PLCAddress(1 ,"DBB20.0"));
+        System.out.println(new PLCAddress(1 ,"DBB30.1"));
+        System.out.println(new PLCAddress(1 ,"DBB400"));
+        System.out.println(new PLCAddress(1 ,"DBW0.0"));
+        System.out.println(new PLCAddress(1 ,"DBW0"));
+        System.out.println(new PLCAddress(1 ,"M16"));
+        System.out.println(new PLCAddress(1 ,"M16.0"));
+        System.out.println(new PLCAddress(1 ,"MX16.0"));
     }
     
 }

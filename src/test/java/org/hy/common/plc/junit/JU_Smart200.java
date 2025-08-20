@@ -2,6 +2,7 @@ package org.hy.common.plc.junit;
 
 import org.hy.common.plc.data.PLCConfig;
 import org.hy.common.plc.data.XPLC;
+import org.hy.common.plc.enums.PLCProtocolType;
 
 import Moka7.S7;
 import Moka7.S7Client;
@@ -11,7 +12,7 @@ import Moka7.S7Client;
 
 
 /**
- * 测试单元：西门子Smart200的通讯协议
+ * 测试单元：西门子S7-200 Smart的通讯协议
  *
  * @author      ZhengWei(HY)
  * @createDate  2025-08-06
@@ -95,7 +96,7 @@ public class JU_Smart200
     public static void connectS7200()
     {
         PLCConfig v_Config = new PLCConfig();
-        v_Config.setProtocol(PLCConfig.$Protocol);
+        v_Config.setProtocol(PLCProtocolType.S7.getValue());
         v_Config.setHost("192.168.2.131");
         v_Config.setPort(102);
         v_Config.setRack(0);
@@ -118,7 +119,7 @@ public class JU_Smart200
     public static void connectS71200()
     {
         PLCConfig v_Config = new PLCConfig();
-        v_Config.setProtocol(PLCConfig.$Protocol);
+        v_Config.setProtocol(PLCProtocolType.S7.getValue());
         v_Config.setHost("192.168.2.132");
         v_Config.setPort(102);
         v_Config.setRack(0);
