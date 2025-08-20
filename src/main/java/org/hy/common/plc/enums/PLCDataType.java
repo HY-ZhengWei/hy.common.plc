@@ -16,11 +16,11 @@ public enum PLCDataType
     
     Bool   ("DBool"   ,"BOOL"    ,"布尔"),
                                  
-    Byte   ("DByte"   ,"BYTE"    ,"字节"),
+    Byte   ("DByte"   ,"BYTE"    ,"8位字节"),
                                  
-    Word   ("DWord"   ,"WORD"    ,"字"),
+    Word   ("DWord"   ,"WORD"    ,"16位字"),
                                  
-    DWord  ("DDWord"  ,"DWORD"   ,"双字"),
+    DWord  ("DDWord"  ,"DWORD"   ,"32位双字"),
                                  
     SInt   ("DSInt"   ,"SINT"    ,"8位有符号整数"),
                                  
