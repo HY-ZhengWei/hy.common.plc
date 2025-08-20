@@ -16,12 +16,6 @@ import org.hy.common.XJavaID;
 public class PLCConfig implements XJavaID
 {
     
-    /** 默认协议 */
-    public static final String $Protocol         = "s7";
-    
-    /** Smart200协议 */
-    public static final String $ProtocolSmart200 = "s7 Smart200";
-    
     /** 默认端口 */
     public static final int    $Port             = 102;
     
