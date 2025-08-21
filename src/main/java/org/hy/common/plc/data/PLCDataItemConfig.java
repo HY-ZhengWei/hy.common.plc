@@ -56,6 +56,13 @@ public class PLCDataItemConfig
     
     
     
+    public PLCDataItemConfig()
+    {
+        this.isNumber = true;
+    }
+    
+    
+    
     /**
      * 生成数据项的PLC请求地址
      * 
