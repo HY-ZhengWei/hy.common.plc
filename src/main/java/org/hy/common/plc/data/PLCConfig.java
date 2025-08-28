@@ -13,6 +13,7 @@ import org.hy.common.XJavaID;
  * @author      ZhengWei(HY)
  * @createDate  2024-05-11
  * @version     v1.0
+ *              v2.0  2025-08-28  添加：出现异常时，是否重新连接
  */
 public class PLCConfig implements XJavaID
 {
