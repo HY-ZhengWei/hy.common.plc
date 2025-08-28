@@ -44,11 +44,15 @@ public class PlcIO4X implements IPlcIO
     /** PLC连接对象 */
     private PlcConnection plcConnect;
     
+    /** 出现异常时，是否重新连接。默认值：真 */
+    private boolean       reconnect;
+    
     
     
     public PlcIO4X(PLCConfig i_PLCConfig)
     {
         this.plcConfig = i_PLCConfig;
+        this.reconnect = true;
     }
     
     
@@ -196,6 +200,10 @@ public class PlcIO4X implements IPlcIO
         catch (Exception exce)
         {
             $Logger.error(exce);
+            if ( this.reconnect )
+            {
+                this.close();
+            }
         }
         finally 
         {
@@ -302,8 +310,11 @@ public class PlcIO4X implements IPlcIO
         }
         catch (Exception exce)
         {
-            exce.printStackTrace();
             $Logger.error(exce);
+            if ( this.reconnect )
+            {
+                this.close();
+            }
         }
         finally 
         {
@@ -551,6 +562,28 @@ public class PlcIO4X implements IPlcIO
         {
             $Logger.error(this.plcConfig.getXid() + " 连接关闭时异常" ,exce);
         }
+    }
+    
+    
+    
+    /**
+     * 获取：出现异常时，是否重新连接。默认值：真
+     */
+    public boolean isReconnect()
+    {
+        return reconnect;
+    }
+
+
+    
+    /**
+     * 设置：出现异常时，是否重新连接。默认值：真
+     * 
+     * @param i_Reconnect 出现异常时，是否重新连接。默认值：真
+     */
+    public void setReconnect(boolean i_Reconnect)
+    {
+        this.reconnect = i_Reconnect;
     }
     
 }

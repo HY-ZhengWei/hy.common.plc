@@ -39,11 +39,15 @@ public class PlcIOS200 implements IPlcIO
     /** PLC连接对象 */
     private S7Client  plcConnect;
     
+    /** 出现异常时，是否重新连接。默认值：真 */
+    private boolean   reconnect;
+    
     
     
     public PlcIOS200(PLCConfig i_PLCConfig)
     {
         this.plcConfig = i_PLCConfig;
+        this.reconnect = true;
     }
     
     
@@ -189,6 +193,10 @@ public class PlcIOS200 implements IPlcIO
         catch (Exception exce)
         {
             $Logger.error(exce);
+            if ( this.reconnect )
+            {
+                this.close();
+            }
         }
         finally 
         {
@@ -293,8 +301,11 @@ public class PlcIOS200 implements IPlcIO
         }
         catch (Exception exce)
         {
-            exce.printStackTrace();
             $Logger.error(exce);
+            if ( this.reconnect )
+            {
+                this.close();
+            }
         }
         finally 
         {
@@ -315,7 +326,7 @@ public class PlcIOS200 implements IPlcIO
      *
      * @return
      */
-    public boolean connect()
+    public synchronized boolean connect()
     {
         // 创建S7客户端实例
         this.plcConnect = new S7Client();
@@ -370,7 +381,7 @@ public class PlcIOS200 implements IPlcIO
      * @version     v1.0
      *
      */
-    public void close()
+    public synchronized void close()
     {
         if ( this.plcConnect == null )
         {
@@ -385,6 +396,28 @@ public class PlcIOS200 implements IPlcIO
         {
             $Logger.error(this.plcConfig.getXid() + " 连接关闭时异常" ,exce);
         }
+    }
+    
+    
+    
+    /**
+     * 获取：出现异常时，是否重新连接。默认值：真
+     */
+    public boolean isReconnect()
+    {
+        return reconnect;
+    }
+
+
+    
+    /**
+     * 设置：出现异常时，是否重新连接。默认值：真
+     * 
+     * @param i_Reconnect 出现异常时，是否重新连接。默认值：真
+     */
+    public void setReconnect(boolean i_Reconnect)
+    {
+        this.reconnect = i_Reconnect;
     }
     
 }

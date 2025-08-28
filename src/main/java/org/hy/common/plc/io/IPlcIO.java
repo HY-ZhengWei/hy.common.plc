@@ -116,4 +116,20 @@ public interface IPlcIO
      */
     public void close();
     
+    
+    
+    /**
+     * 获取：出现异常时，是否重新连接。默认值：真
+     */
+    public boolean isReconnect();
+
+
+    
+    /**
+     * 设置：出现异常时，是否重新连接。默认值：真
+     * 
+     * @param i_Reconnect 出现异常时，是否重新连接。默认值：真
+     */
+    public void setReconnect(boolean i_Reconnect);
+    
 }
