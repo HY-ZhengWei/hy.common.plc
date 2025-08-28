@@ -1,5 +1,6 @@
 package org.hy.common.plc.data;
 
+import org.hy.common.Help;
 import org.hy.common.XJavaID;
 
 
@@ -53,6 +54,16 @@ public class PLCConfig implements XJavaID
     
     /** 连接访问密码 */
     private String        userPassword;
+    
+    /** 出现异常时，是否重新连接。默认值：真 */
+    private Integer       reconnect;
+    
+    
+    
+    public PLCConfig()
+    {
+        this.reconnect = 1;
+    }
     
     
     
@@ -236,6 +247,26 @@ public class PLCConfig implements XJavaID
     }
     
     
+    /**
+     * 获取：出现异常时，是否重新连接。默认值：真
+     */
+    public Integer getReconnect()
+    {
+        return Help.NVL(this.reconnect ,1);
+    }
+
+    
+    /**
+     * 设置：出现异常时，是否重新连接。默认值：真
+     * 
+     * @param i_Reconnect 出现异常时，是否重新连接。默认值：真
+     */
+    public void setReconnect(Integer i_Reconnect)
+    {
+        this.reconnect = i_Reconnect;
+    }
+
+
     /**
      * 设置XJava池中对象的ID标识。此方法不用用户调用设置值，是自动的。
      * 
