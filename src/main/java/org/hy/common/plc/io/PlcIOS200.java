@@ -188,6 +188,7 @@ public class PlcIOS200 implements IPlcIO
         }
         catch (Exception exce)
         {
+            v_Ret = false;
             $Logger.error(exce);
             if ( this.plcConfig.getReconnect() >= 1 )
             {

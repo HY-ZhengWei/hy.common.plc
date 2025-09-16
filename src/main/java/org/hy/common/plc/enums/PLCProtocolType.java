@@ -14,9 +14,9 @@ package org.hy.common.plc.enums;
 public enum PLCProtocolType
 {
     
-    S7          ("S7"           ,"支持S7-300、S7-400、S7-1200、S7-1500"),   // PROFINET网络
+    S7          ("s7"           ,"支持S7-300、S7-400、S7-1200、S7-1500"),   // PROFINET网络
                                  
-    S7_200_Smart("S7-200-SMART" ,"支持S7-200 SMART"),
+    S7_200_Smart("s7-200-smart" ,"支持S7-200 SMART"),
                                  
     ;
     

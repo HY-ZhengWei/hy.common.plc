@@ -195,6 +195,7 @@ public class PlcIO4X implements IPlcIO
         }
         catch (Exception exce)
         {
+            v_Ret = false;
             $Logger.error(exce);
             if ( this.plcConfig.getReconnect() >= 1 )
             {
