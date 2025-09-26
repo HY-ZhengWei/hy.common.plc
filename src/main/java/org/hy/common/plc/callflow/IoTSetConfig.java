@@ -31,6 +31,8 @@ import org.hy.common.xml.log.Logger;
  * @author      ZhengWei(HY)
  * @createDate  2025-03-07
  * @version     v1.0
+ *              v2.0  2025-09-26  添加：特性化的静态检查
+ *                                修正：执行结果false时表示异常
  */
 public class IoTSetConfig extends NodeConfig implements NodeConfigBase
 {
@@ -97,6 +99,40 @@ public class IoTSetConfig extends NodeConfig implements NodeConfigBase
         this.callParam = new NodeParam();
         this.callParam.setValueClass(Map.class.getName());
         this.setCallParam(this.callParam);
+        this.setRetFalseIsError(true);
+    }
+    
+    
+    
+    /**
+     * 静态检查
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2025-09-26
+     * @version     v1.0
+     *
+     * @param io_Result     表示检测结果
+     * @return
+     */
+    public boolean check(Return<Object> io_Result)
+    {
+        if ( Help.isNull(this.getDeviceXID()) )
+        {
+            io_Result.set(false).setParamStr("CFlowCheck：" + this.getClass().getSimpleName() + "[" + Help.NVL(this.getXid()) + "].deviceXID is null.");
+            return false;
+        }
+        if ( Help.isNull(this.getDatagramXID()) )
+        {
+            io_Result.set(false).setParamStr("CFlowCheck：" + this.getClass().getSimpleName() + "[" + Help.NVL(this.getXid()) + "].datagramXID is null.");
+            return false;
+        }
+        if ( Help.isNull(this.getDataXID()) )
+        {
+            io_Result.set(false).setParamStr("CFlowCheck：" + this.getClass().getSimpleName() + "[" + Help.NVL(this.getXid()) + "].dataXID is null.");
+            return false;
+        }
+        
+        return true;
     }
     
     
@@ -284,6 +320,24 @@ public class IoTSetConfig extends NodeConfig implements NodeConfigBase
     public String toXmlName()
     {
         return $ElementType;
+    }
+    
+    
+    
+    /**
+     * 转XML时是否显示retFalseIsError属性
+     * 
+     * 建议：子类重写此方法
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2025-09-25
+     * @version     v1.0
+     *
+     * @return
+     */
+    public boolean xmlShowRetFalseIsError()
+    {
+        return false;
     }
     
     
