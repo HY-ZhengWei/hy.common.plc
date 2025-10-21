@@ -5,8 +5,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.hy.common.Help;
+import org.hy.common.PartitionMap;
 import org.hy.common.Return;
 import org.hy.common.StringHelp;
+import org.hy.common.TablePartitionLink;
 import org.hy.common.callflow.CallFlow;
 import org.hy.common.callflow.common.ValueHelp;
 import org.hy.common.callflow.execute.ExecuteElement;
@@ -33,6 +35,7 @@ import org.hy.common.xml.log.Logger;
  * @version     v1.0
  *              v2.0  2025-09-26  添加：特性化的静态检查
  *                                修正：执行结果false时表示异常
+ *              v3.0  2025-10-21  添加：物联设备XID支持更多的占位符格式
  */
 public class IoTSetConfig extends NodeConfig implements NodeConfigBase
 {
@@ -43,13 +46,16 @@ public class IoTSetConfig extends NodeConfig implements NodeConfigBase
     
     
     /** 物联设备XID的变量名称或值 */
-    private String              deviceXID;
+    private String                        deviceXID;
+    
+    /** 物联设备XID，已解释完成的占位符（性能有优化，仅内部使用） */
+    private PartitionMap<String ,Integer> deviceXIDPlaceholders;
     
     /** 物联设备PLC */
-    private PLC                 callObject;
+    private PLC                           callObject;
     
     /** 物联参数数据 */
-    private NodeParam           callParam;
+    private NodeParam                     callParam;
     
     
     
@@ -138,6 +144,22 @@ public class IoTSetConfig extends NodeConfig implements NodeConfigBase
     
     
     /**
+     * 当用户没有设置XID时，可使用此方法生成
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2025-10-21
+     * @version     v1.0
+     *
+     * @return
+     */
+    public String makeXID()
+    {
+        return "XIOTS_" + StringHelp.getUUID9n();
+    }
+    
+    
+    
+    /**
      * 元素的类型
      * 
      * @author      ZhengWei(HY)
@@ -170,6 +192,22 @@ public class IoTSetConfig extends NodeConfig implements NodeConfigBase
      */
     public void setDeviceXID(String i_DeviceXID)
     {
+        PartitionMap<String ,Integer> v_PlaceholdersOrg = null;
+        if ( !Help.isNull(i_DeviceXID) )
+        {
+            v_PlaceholdersOrg = StringHelp.parsePlaceholdersSequence(DBSQL.$Placeholder ,i_DeviceXID ,true);
+        }
+        
+        if ( !Help.isNull(v_PlaceholdersOrg) )
+        {
+            this.deviceXIDPlaceholders = Help.toReverse(v_PlaceholdersOrg);
+            v_PlaceholdersOrg.clear();
+            v_PlaceholdersOrg = null;
+        }
+        else
+        {
+            this.deviceXIDPlaceholders = new TablePartitionLink<String ,Integer>();
+        }
         this.deviceXID = ValueHelp.standardRefID(i_DeviceXID);
         this.reset(this.getRequestTotal() ,this.getSuccessTotal());
         this.keyChange();
@@ -278,7 +316,7 @@ public class IoTSetConfig extends NodeConfig implements NodeConfigBase
         String v_DeviceXID = null;
         try
         {
-            v_DeviceXID = (String) ValueHelp.getValue(this.deviceXID ,String.class ,null ,io_Context);
+            v_DeviceXID = (String) ValueHelp.getValueReplace(this.deviceXID ,deviceXIDPlaceholders ,String.class ,null ,io_Context);
             this.callObject.setPlcXID(v_DeviceXID);
             
             Map<String ,Object> v_PLCParams = (Map<String ,Object>) io_Params[0];
