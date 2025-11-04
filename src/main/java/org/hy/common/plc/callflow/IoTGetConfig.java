@@ -14,8 +14,11 @@ import org.hy.common.callflow.execute.ExecuteElement;
 import org.hy.common.callflow.file.IToXml;
 import org.hy.common.callflow.node.NodeConfig;
 import org.hy.common.callflow.node.NodeConfigBase;
+import org.hy.common.callflow.node.NodeParam;
 import org.hy.common.db.DBSQL;
 import org.hy.common.plc.PLC;
+import org.hy.common.plc.data.PLCConfig;
+import org.hy.common.plc.data.PLCDatagramConfig;
 import org.hy.common.xml.XJava;
 import org.hy.common.xml.log.Logger;
 
@@ -32,6 +35,8 @@ import org.hy.common.xml.log.Logger;
  *              v2.0  2025-09-26  添加：特性化的静态检查
  *                                修正：执行结果false时表示异常
  *              v3.0  2025-10-21  添加：物联设备XID支持更多的占位符格式
+ *              v3.1  2025-11-04  添加：数据报文XID支持更多的占位符格式
+ *                                优化：去除PLC属性，改为动态创建，以支持并发操作。
  */
 public class IoTGetConfig extends NodeConfig implements NodeConfigBase
 {
@@ -48,8 +53,11 @@ public class IoTGetConfig extends NodeConfig implements NodeConfigBase
     /** 物联设备XID，已解释完成的占位符（性能有优化，仅内部使用） */
     private PartitionMap<String ,Integer> deviceXIDPlaceholders;
     
-    /** 物联设备PLC */
-    private PLC                           callObject;
+    /** 数据报文XID */
+    private String                        datagramXID;
+    
+    /** 数据报文XID，已解释完成的占位符（性能有优化，仅内部使用） */
+    private PartitionMap<String ,Integer> datagramXIDPlaceholders;
     
     
     
@@ -89,12 +97,18 @@ public class IoTGetConfig extends NodeConfig implements NodeConfigBase
     {
         super(i_RequestTotal ,i_SuccessTotal);
         
-        String v_CallObjectXID = "XIoTGet" + StringHelp.getUUID9n();
-        this.callObject = new PLC();
+        this.setCallMethod("executeIoT");
         
-        XJava.putObject(v_CallObjectXID ,this.callObject);
-        this.setCallXID(v_CallObjectXID);
-        this.setCallMethod("readDatas");
+        NodeParam v_CallParamDeviceXID = new NodeParam();
+        v_CallParamDeviceXID.setValueClass(String.class.getName());
+        v_CallParamDeviceXID.setValue("");
+        this.setCallParam(v_CallParamDeviceXID);
+        
+        NodeParam v_CallParamDatagramXID = new NodeParam();
+        v_CallParamDatagramXID.setValueClass(String.class.getName());
+        v_CallParamDatagramXID.setValue("");
+        this.setCallParam(v_CallParamDatagramXID);
+        
         this.setRetFalseIsError(true);
     }
     
@@ -112,6 +126,11 @@ public class IoTGetConfig extends NodeConfig implements NodeConfigBase
      */
     public boolean check(Return<Object> io_Result)
     {
+        if ( !super.check(io_Result) )
+        {
+            return false;
+        }
+        
         if ( Help.isNull(this.getDeviceXID()) )
         {
             io_Result.set(false).setParamStr("CFlowCheck：" + this.getClass().getSimpleName() + "[" + Help.NVL(this.getXid()) + "].deviceXID is null.");
@@ -162,6 +181,50 @@ public class IoTGetConfig extends NodeConfig implements NodeConfigBase
     
     /**
      * 获取：物联设备XID
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2025-11-03
+     * @version     v1.0
+     *
+     * @param i_Context  上下文类型的变量信息
+     * @return
+     */
+    private String getDeviceXID(Map<String ,Object> i_Context)
+    {
+        try
+        {
+            Object v_Value = ValueHelp.getValueReplace(this.deviceXID ,this.deviceXIDPlaceholders ,null ,null ,i_Context);
+            if ( v_Value instanceof String )
+            {
+                String v_DeviceXID = (String) v_Value;
+                if ( XJava.getObject(v_DeviceXID) == null )
+                {
+                    throw new NullPointerException(this.getXid() + "." + this.deviceXID + "[" + v_DeviceXID + "] is not exists.");
+                }
+                return v_DeviceXID;
+            }
+            else if ( v_Value instanceof PLCConfig )
+            {
+                PLCConfig v_Device = (PLCConfig) v_Value;
+                return v_Device.getXid();
+            }
+            else
+            {
+                throw new NullPointerException(this.getXid() + "." + this.deviceXID + " is not exists.");
+            }
+        }
+        catch (Exception exce)
+        {
+            String v_Msg = this.getXid() + " 物联设备[" + this.deviceXID + "] 获取运行实例异常";
+            $Logger.error(v_Msg ,exce);
+            throw new RuntimeException(v_Msg ,exce);
+        }
+    }
+    
+    
+    
+    /**
+     * 获取：物联设备XID
      */
     public String getDeviceXID()
     {
@@ -193,9 +256,53 @@ public class IoTGetConfig extends NodeConfig implements NodeConfigBase
         {
             this.deviceXIDPlaceholders = new TablePartitionLink<String ,Integer>();
         }
-        this.deviceXID = ValueHelp.standardRefID(i_DeviceXID);
+        this.deviceXID = i_DeviceXID.trim();
         this.reset(this.getRequestTotal() ,this.getSuccessTotal());
         this.keyChange();
+    }
+    
+    
+    
+    /**
+     * 获取：数据报文XID
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2025-11-03
+     * @version     v1.0
+     *
+     * @param i_Context  上下文类型的变量信息
+     * @return
+     */
+    private String getDatagramXID(Map<String ,Object> i_Context)
+    {
+        try
+        {
+            Object v_Value = ValueHelp.getValueReplace(this.datagramXID ,this.datagramXIDPlaceholders ,null ,null ,i_Context);
+            if ( v_Value instanceof String )
+            {
+                String v_DatagramXID = (String) v_Value;
+                if ( XJava.getObject(v_DatagramXID) == null )
+                {
+                    throw new NullPointerException(this.getXid() + "." + this.datagramXID + "[" + v_DatagramXID + "] is not exists.");
+                }
+                return v_DatagramXID;
+            }
+            else if ( v_Value instanceof PLCDatagramConfig )
+            {
+                PLCDatagramConfig v_Datagram = (PLCDatagramConfig) v_Value;
+                return v_Datagram.getXid();
+            }
+            else
+            {
+                throw new NullPointerException(this.getXid() + "." + this.datagramXID + " is not exists.");
+            }
+        }
+        catch (Exception exce)
+        {
+            String v_Msg = this.getXid() + " 物联报文[" + this.datagramXID + "]获取运行实例异常";
+            $Logger.error(v_Msg ,exce);
+            throw new RuntimeException(v_Msg ,exce);
+        }
     }
     
     
@@ -205,20 +312,10 @@ public class IoTGetConfig extends NodeConfig implements NodeConfigBase
      */
     public String getDatagramXID()
     {
-        return DBSQL.$Placeholder + this.callObject.getDatagramXID();
+        return this.datagramXID;
     }
     
     
-    
-    /**
-     * 获取：数据报文XID
-     */
-    private String gatDatagramXID()
-    {
-        return this.callObject.getDatagramXID();
-    }
-    
-
     
     /**
      * 设置：数据报文XID
@@ -227,9 +324,61 @@ public class IoTGetConfig extends NodeConfig implements NodeConfigBase
      */
     public void setDatagramXID(String i_DatagramXID)
     {
-        this.callObject.setDatagramXID(ValueHelp.standardValueID(i_DatagramXID));
+        PartitionMap<String ,Integer> v_PlaceholdersOrg = null;
+        if ( !Help.isNull(i_DatagramXID) )
+        {
+            v_PlaceholdersOrg = StringHelp.parsePlaceholdersSequence(DBSQL.$Placeholder ,i_DatagramXID ,true);
+        }
+        
+        if ( !Help.isNull(v_PlaceholdersOrg) )
+        {
+            this.datagramXIDPlaceholders = Help.toReverse(v_PlaceholdersOrg);
+            v_PlaceholdersOrg.clear();
+            v_PlaceholdersOrg = null;
+        }
+        else
+        {
+            this.datagramXIDPlaceholders = new TablePartitionLink<String ,Integer>();
+        }
+        this.datagramXID = i_DatagramXID.trim();
         this.reset(this.getRequestTotal() ,this.getSuccessTotal());
         this.keyChange();
+    }
+    
+    
+    
+    /**
+     * 设置XJava池中对象的ID标识。此方法不用用户调用设置值，是自动的。
+     * 
+     * 自己反射调用自己的实例中的方法
+     * 
+     * @param i_XJavaID
+     */
+    public void setXJavaID(String i_Xid)
+    {
+        super.setXJavaID(i_Xid);
+        this.setCallXID(this.getXid());
+    }
+    
+    
+    
+    /**
+     * 执行方法前，对执行对象的处理
+     * 
+     * 建议：子类重写此方法
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2025-11-04
+     * @version     v1.0
+     *
+     * @param io_Context        上下文类型的变量信息
+     * @param io_ExecuteObject  执行对象。已用NodeConfig自己的力量生成了执行对象。
+     * @return
+     */
+    public Object generateObject(Map<String ,Object> io_Context ,Object io_ExecuteObject)
+    {
+        // 其实就是返回自己。io_ExecuteObject 获取正确时，也是this自己
+        return io_ExecuteObject == null ? this : io_ExecuteObject;
     }
     
     
@@ -249,18 +398,33 @@ public class IoTGetConfig extends NodeConfig implements NodeConfigBase
      */
     public Object [] generateParams(Map<String ,Object> io_Context ,Object [] io_Params)
     {
-        String v_DeviceXID = null;
-        try
-        {
-            v_DeviceXID = (String) ValueHelp.getValueReplace(this.deviceXID ,this.deviceXIDPlaceholders ,String.class ,null ,io_Context);
-            this.callObject.setPlcXID(v_DeviceXID);
-            return io_Params;
-        }
-        catch (Exception exce)
-        {
-            $Logger.error(exce);
-            throw new RuntimeException(exce);
-        }
+        String v_DeviceXID   = this.getDeviceXID(  io_Context);
+        String v_DatagramXID = this.getDatagramXID(io_Context);
+        
+        io_Params[0] = v_DeviceXID;
+        io_Params[1] = v_DatagramXID;
+        
+        return io_Params;
+    }
+    
+    
+    
+    /**
+     * 执行IoT读
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2025-11-04
+     * @version     v1.0
+     *
+     * @param i_DeviceXID    物联设备XID
+     * @param i_DatagramXID  数据报文XID
+     * @param i_Datas        物联参数数据。对应本类中的dataXID
+     * @return
+     */
+    public Map<String ,Object> executeIoT(String i_DeviceXID ,String i_DatagramXID)
+    {
+        PLC v_PLC = new PLC(i_DeviceXID ,i_DatagramXID);
+        return v_PLC.readDatas();
     }
 
 
@@ -322,13 +486,15 @@ public class IoTGetConfig extends NodeConfig implements NodeConfigBase
      */
     public void toXmlContent(StringBuilder io_Xml ,int i_Level ,String i_Level1 ,String i_LevelN ,String i_SuperTreeID ,String i_TreeID)
     {
+        String v_NewSpace = "\n" + i_LevelN + i_Level1;
+        
         if ( !Help.isNull(this.deviceXID) )
         {
-            io_Xml.append("\n").append(i_LevelN).append(i_Level1).append(IToXml.toValue("deviceXID" ,this.deviceXID));
+            io_Xml.append(v_NewSpace).append(IToXml.toValue("deviceXID" ,this.deviceXID));
         }
-        if ( !Help.isNull(this.callObject.getDatagramXID()) )
+        if ( !Help.isNull(this.getDatagramXID()) )
         {
-            io_Xml.append("\n").append(i_LevelN).append(i_Level1).append(IToXml.toValue("datagramXID" ,this.getDatagramXID()));
+            io_Xml.append(v_NewSpace).append(IToXml.toValue("datagramXID" ,this.getDatagramXID()));
         }
     }
     
@@ -357,42 +523,51 @@ public class IoTGetConfig extends NodeConfig implements NodeConfigBase
             v_Builder.append(DBSQL.$Placeholder).append(this.returnID).append(" = ");
         }
         
-        if ( Help.isNull(this.deviceXID) )
+        String v_DeviceXID = null;
+        try
+        {
+            v_DeviceXID = this.getDeviceXID(i_Context);
+        }
+        catch (Exception exce)
+        {
+            // Nothing. 已在上面的方法内输出异常日志
+        }
+        if ( Help.isNull(v_DeviceXID) )
         {
             v_Builder.append("?");
         }
         else
         {
-            try
+            if ( XJava.getObject(v_DeviceXID) != null )
             {
-                String v_DeviceXID = (String) ValueHelp.getValue(this.deviceXID ,String.class ,null ,i_Context);
-                if ( XJava.getObject(v_DeviceXID) != null )
-                {
-                    v_Builder.append(v_DeviceXID);
-                }
-                else
-                {
-                    v_Builder.append("[NULL]");
-                }
+                v_Builder.append(v_DeviceXID);
             }
-            catch (Exception exce)
+            else
             {
-                $Logger.error(exce);
-                v_Builder.append("[ERROR]");
+                v_Builder.append("[NULL]");
             }
         }
         
         v_Builder.append(".");
         
-        if ( Help.isNull(this.gatDatagramXID()) )
+        String v_DatagramXID = null;
+        try
+        {
+            v_DatagramXID = this.getDatagramXID(i_Context);
+        }
+        catch (Exception exce)
+        {
+            // Nothing. 已在上面的方法内输出异常日志
+        }
+        if ( Help.isNull(v_DatagramXID) )
         {
             v_Builder.append("?");
         }
         else
         {
-            if ( XJava.getObject(this.gatDatagramXID()) != null )
+            if ( XJava.getObject(v_DatagramXID) != null )
             {
-                v_Builder.append(this.getDatagramXID());
+                v_Builder.append(v_DatagramXID);
             }
             else
             {
@@ -439,7 +614,7 @@ public class IoTGetConfig extends NodeConfig implements NodeConfigBase
         
         v_Builder.append(".");
         
-        if ( Help.isNull(this.gatDatagramXID()) )
+        if ( Help.isNull(this.getDatagramXID()) )
         {
             v_Builder.append("?");
         }
@@ -490,9 +665,11 @@ public class IoTGetConfig extends NodeConfig implements NodeConfigBase
         IoTGetConfig v_Clone = new IoTGetConfig();
         
         this.cloneMyOnly(v_Clone);
+        
+        // v_Clone.callXID  = this.callXID;     不能克隆callXID，因为它就是类自己的xid
         v_Clone.setTimeout(this.getTimeout());
-        v_Clone.deviceXID = this.deviceXID;
-        v_Clone.setDatagramXID(this.getDatagramXID()); 
+        v_Clone.deviceXID   = this.deviceXID;
+        v_Clone.datagramXID = this.datagramXID; 
         
         return v_Clone;
     }
@@ -525,9 +702,10 @@ public class IoTGetConfig extends NodeConfig implements NodeConfigBase
         IoTGetConfig v_Clone = (IoTGetConfig) io_Clone;
         ((ExecuteElement) this).clone(v_Clone ,i_ReplaceXID ,i_ReplaceByXID ,i_AppendXID ,io_XIDObjects);
         
+        // v_Clone.callXID  = this.callXID;     不能克隆callXID，因为它就是类自己的xid
         v_Clone.setTimeout(this.getTimeout());
-        v_Clone.deviceXID = this.deviceXID;
-        v_Clone.setDatagramXID(this.getDatagramXID()); 
+        v_Clone.deviceXID   = this.deviceXID;
+        v_Clone.datagramXID = this.datagramXID;
     }
     
     
