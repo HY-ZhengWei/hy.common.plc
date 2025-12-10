@@ -25,6 +25,7 @@ import Moka7.S7Client;
  * @author      ZhengWei(HY)
  * @createDate  2025-08-19
  * @version     v1.0
+ *              v1.1  2025-12-10  修正：自动重连机制的问题：在关闭close()时，将 plcConnect 赋值为空
  */
 public class PlcIOS200 implements IPlcIO
 {
@@ -388,6 +389,7 @@ public class PlcIOS200 implements IPlcIO
         try
         {
             this.plcConnect.Disconnect();
+            this.plcConnect = null;
         }
         catch (Exception exce)
         {

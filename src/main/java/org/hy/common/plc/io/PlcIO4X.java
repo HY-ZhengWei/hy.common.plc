@@ -31,6 +31,8 @@ import org.hy.common.xml.log.Logger;
  * @author      ZhengWei(HY)
  * @createDate  2025-08-19
  * @version     v1.0
+ *              v1.1  2025-12-10  修正：自动重连机制的问题：在关闭close()时，将 plcConnect 赋值为空
+ *                                修正：read和write两方法添加同步锁
  */
 public class PlcIO4X implements IPlcIO
 {
@@ -129,48 +131,14 @@ public class PlcIO4X implements IPlcIO
                 }
             }
             
-            List<PLCDataItemConfig> v_Items              = i_Datagram.getItems();
-            int                     v_ItemCount          = 0;
-            PlcWriteRequest.Builder v_PlcWriteReqBuilder = this.plcConnect.writeRequestBuilder();
-            
-            $Logger.info("PLC Write " + Help.NVL(this.plcConfig.getComment()) + this.plcConfig.getXid() + "." + Help.NVL(i_Datagram.getComment()) + i_Datagram.getXid());
-            for (PLCDataItemConfig v_Item : v_Items)
+            List<PLCDataItemConfig> v_Items     = i_Datagram.getItems();
+            int                     v_ItemCount = 0;
+            PlcWriteResponse        v_Response  = null;
+            synchronized (this)
             {
-                String v_PLCTagAddress = v_Item.makePLCTagAddress();
-                if ( Help.isNull(v_PLCTagAddress) )
-                {
-                    continue;
-                }
+                PlcWriteRequest.Builder v_PlcWriteReqBuilder = this.plcConnect.writeRequestBuilder();
                 
-                Object v_DataItemValue = Help.getValueIgnoreCase(i_Datas ,v_Item.getCode());
-                if ( v_DataItemValue == null )
-                {
-                    $Logger.error("写入PLC数据为空：" + v_Item.getCode() + " " + v_Item.getName()
-                                + "\n寄存器名：" + v_Item.getRegisterType().getValue()
-                                + "\n寄存编号：" + v_Item.getRegisterNo()
-                                + "\n偏移数量：" + v_Item.getRegisterOffset()
-                                + "\n数据类型：" + v_Item.getDataType().getValue());
-                    v_Ret = false;
-                    break;
-                }
-                
-                $Logger.info("PLC Write " + v_Item.getName() + v_Item.getCode() + "：" + v_PLCTagAddress + "=" + v_DataItemValue);
-                v_PlcWriteReqBuilder.addTagAddress(v_Item.getCode() ,v_PLCTagAddress ,v_DataItemValue);
-                v_ItemCount++;
-            }
-            
-            if ( v_ItemCount <= 0 )
-            {
-                v_Ret = false;
-                $Logger.error("DatagramXID[" + i_Datagram.getXid() + "] itemCount is 0");
-            }
-            else if ( v_Ret )
-            {
-                long             v_Timeout         = i_Timeout <= 0L ? 0L : i_Timeout;
-                PlcWriteRequest  v_PlcWriteRequest = v_PlcWriteReqBuilder.build();
-                PlcWriteResponse v_Response        = v_PlcWriteRequest.execute().get(v_Timeout ,TimeUnit.SECONDS);
-                
-                // 检查是否成功
+                $Logger.info("PLC Write " + Help.NVL(this.plcConfig.getComment()) + this.plcConfig.getXid() + "." + Help.NVL(i_Datagram.getComment()) + i_Datagram.getXid());
                 for (PLCDataItemConfig v_Item : v_Items)
                 {
                     String v_PLCTagAddress = v_Item.makePLCTagAddress();
@@ -179,10 +147,10 @@ public class PlcIO4X implements IPlcIO
                         continue;
                     }
                     
-                    if ( v_Response.getResponseCode(v_Item.getCode()) != PlcResponseCode.OK )
+                    Object v_DataItemValue = Help.getValueIgnoreCase(i_Datas ,v_Item.getCode());
+                    if ( v_DataItemValue == null )
                     {
-                        $Logger.error("写入PLC数据失败：" + v_Item.getCode() + " " + v_Item.getName()
-                                    + "\n" + v_Response.getResponseCode(v_Item.getCode()).getValue() + "=" + v_Response.getResponseCode(v_Item.getCode()).name()
+                        $Logger.error("写入PLC数据为空：" + v_Item.getCode() + " " + v_Item.getName()
                                     + "\n寄存器名：" + v_Item.getRegisterType().getValue()
                                     + "\n寄存编号：" + v_Item.getRegisterNo()
                                     + "\n偏移数量：" + v_Item.getRegisterOffset()
@@ -190,6 +158,49 @@ public class PlcIO4X implements IPlcIO
                         v_Ret = false;
                         break;
                     }
+                    
+                    $Logger.info("PLC Write " + v_Item.getName() + v_Item.getCode() + "：" + v_PLCTagAddress + "=" + v_DataItemValue);
+                    v_PlcWriteReqBuilder.addTagAddress(v_Item.getCode() ,v_PLCTagAddress ,v_DataItemValue);
+                    v_ItemCount++;
+                }
+                
+                if ( v_ItemCount <= 0 )
+                {
+                    v_Ret = false;
+                    $Logger.error("DatagramXID[" + i_Datagram.getXid() + "] itemCount is 0");
+                    return v_Ret;
+                }
+                else if ( v_Ret )
+                {
+                    long            v_Timeout         = i_Timeout <= 0L ? 0L : i_Timeout;
+                    PlcWriteRequest v_PlcWriteRequest = v_PlcWriteReqBuilder.build();
+                    v_Response = v_PlcWriteRequest.execute().get(v_Timeout ,TimeUnit.SECONDS);
+                }
+                else
+                {
+                    return v_Ret;
+                }
+            }
+            
+            // 检查是否成功
+            for (PLCDataItemConfig v_Item : v_Items)
+            {
+                String v_PLCTagAddress = v_Item.makePLCTagAddress();
+                if ( Help.isNull(v_PLCTagAddress) )
+                {
+                    continue;
+                }
+                
+                if ( v_Response.getResponseCode(v_Item.getCode()) != PlcResponseCode.OK )
+                {
+                    $Logger.error("写入PLC数据失败：" + v_Item.getCode() + " " + v_Item.getName()
+                                + "\n" + v_Response.getResponseCode(v_Item.getCode()).getValue() + "=" + v_Response.getResponseCode(v_Item.getCode()).name()
+                                + "\n寄存器名：" + v_Item.getRegisterType().getValue()
+                                + "\n寄存编号：" + v_Item.getRegisterNo()
+                                + "\n偏移数量：" + v_Item.getRegisterOffset()
+                                + "\n数据类型：" + v_Item.getDataType().getValue());
+                    v_Ret = false;
+                    break;
                 }
             }
         }
@@ -249,33 +260,37 @@ public class PlcIO4X implements IPlcIO
                 }
             }
             
-            List<PLCDataItemConfig> v_Items             = i_Datagram.getItems();
-            PlcReadRequest.Builder  v_PLCReadReqBuilder = this.plcConnect.readRequestBuilder();
-            int                     v_ItemCount         = 0;
-            
-            $Logger.info("PLC Read " + Help.NVL(this.plcConfig.getComment()) + this.plcConfig.getXid() + "." + Help.NVL(i_Datagram.getComment()) + i_Datagram.getXid());
-            for (PLCDataItemConfig v_Item : v_Items)
+            int                     v_ItemCount       = 0;
+            List<PLCDataItemConfig> v_Items           = i_Datagram.getItems();
+            PlcReadResponse         v_PLCReadResponse = null;
+            synchronized ( this )
             {
-                String v_PLCTagAddress = v_Item.makePLCTagAddress();
-                if ( Help.isNull(v_PLCTagAddress) )
+                PlcReadRequest.Builder v_PLCReadReqBuilder = this.plcConnect.readRequestBuilder();
+                
+                $Logger.info("PLC Read " + Help.NVL(this.plcConfig.getComment()) + this.plcConfig.getXid() + "." + Help.NVL(i_Datagram.getComment()) + i_Datagram.getXid());
+                for (PLCDataItemConfig v_Item : v_Items)
                 {
-                    continue;
+                    String v_PLCTagAddress = v_Item.makePLCTagAddress();
+                    if ( Help.isNull(v_PLCTagAddress) )
+                    {
+                        continue;
+                    }
+                    
+                    $Logger.info("PLC Read " + v_Item.getName() + v_Item.getCode() + "：" + v_PLCTagAddress);
+                    v_PLCReadReqBuilder.addTagAddress(v_Item.getCode() ,v_PLCTagAddress);
+                    v_ItemCount++;
                 }
                 
-                $Logger.info("PLC Read " + v_Item.getName() + v_Item.getCode() + "：" + v_PLCTagAddress);
-                v_PLCReadReqBuilder.addTagAddress(v_Item.getCode() ,v_PLCTagAddress);
-                v_ItemCount++;
+                if ( v_ItemCount <= 0 )
+                {
+                    $Logger.error("DatagramXID[" + i_Datagram.getXid() + "] itemCount is 0");
+                    return v_Datas;
+                }
+                
+                long           v_Timeout        = i_Timeout <= 0L ? 0L : i_Timeout;
+                PlcReadRequest v_PlcReadRequest = v_PLCReadReqBuilder.build();
+                v_PLCReadResponse = v_PlcReadRequest.execute().get(v_Timeout ,TimeUnit.SECONDS);
             }
-            
-            if ( v_ItemCount <= 0 )
-            {
-                $Logger.error("DatagramXID[" + i_Datagram.getXid() + "] itemCount is 0");
-                return v_Datas;
-            }
-            
-            long             v_Timeout        = i_Timeout <= 0L ? 0L : i_Timeout;
-            PlcReadRequest  v_PlcReadRequest  = v_PLCReadReqBuilder.build();
-            PlcReadResponse v_PLCReadResponse = v_PlcReadRequest.execute().get(v_Timeout ,TimeUnit.SECONDS);
             
             for (PLCDataItemConfig v_Item : v_Items)
             {
@@ -554,6 +569,7 @@ public class PlcIO4X implements IPlcIO
         try
         {
             this.plcConnect.close();
+            this.plcConnect = null;
         }
         catch (Exception exce)
         {

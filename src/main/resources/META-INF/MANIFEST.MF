@@ -1,6 +1,6 @@
-Manifest-Version: 1.1.9
+Manifest-Version: 1.2.0
 Created-By: HY.ZhengWei@qq.com  2024-05
-Specification-Version: 1.1.9  2025-11-19
+Specification-Version: 1.2.0  2025-12-10
 SourceCode: https://github.com/HY-ZhengWei/hy.common.plc
 SourceCodeChina: https://gitee.com/HY-ZhengWei/hy.common.plc
 Build-JDK: 17
