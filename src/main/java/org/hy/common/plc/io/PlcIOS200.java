@@ -4,7 +4,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.hy.common.Date;
 import org.hy.common.Help;
 import org.hy.common.plc.data.PLCConfig;
 import org.hy.common.plc.data.PLCDataItemConfig;
@@ -26,6 +25,7 @@ import Moka7.S7Client;
  * @createDate  2025-08-19
  * @version     v1.0
  *              v1.1  2025-12-10  修正：自动重连机制的问题：在关闭close()时，将 plcConnect 赋值为空
+ *              v1.2  2026-01-08  优化：日志输出逻辑，方便在《日志分析》页面上排查问题
  */
 public class PlcIOS200 implements IPlcIO
 {
@@ -99,9 +99,8 @@ public class PlcIOS200 implements IPlcIO
      */
     public boolean writeDatas(PLCDatagramConfig i_Datagram ,Map<String ,Object> i_Datas ,long i_Timeout)
     {
-        $Logger.debug("PLC写：开始" + Date.getNowTime().getTime());
-        
-        boolean v_Ret = true;
+        StringBuilder v_LogBuffer = new StringBuilder();
+        boolean       v_Ret       = true;
         
         try
         {
@@ -125,11 +124,14 @@ public class PlcIOS200 implements IPlcIO
                 }
             }
             
+            String v_Titel = "PLC Write " + Help.NVL(this.plcConfig.getComment()) + this.plcConfig.getXid() + "." + Help.NVL(i_Datagram.getComment()) + i_Datagram.getXid();
+            $Logger.info(v_Titel);
+            v_LogBuffer.append(v_Titel).append("\n");
+            
             List<PLCDataItemConfig>        v_Items              = i_Datagram.getItems();
             int                            v_ItemCount          = 0;
             Map<String ,PLCDataItemConfig> v_PlcWriteReqBuilder = new LinkedHashMap<String ,PLCDataItemConfig>();
             
-            $Logger.info("PLC Write " + this.plcConfig.getComment() + this.plcConfig.getXid() + "." + i_Datagram.getComment() + i_Datagram.getXid());
             for (PLCDataItemConfig v_Item : v_Items)
             {
                 String v_PLCTagAddress = v_Item.makePLCTagAddress();
@@ -150,7 +152,7 @@ public class PlcIOS200 implements IPlcIO
                     break;
                 }
                 
-                $Logger.info("PLC Write " + v_Item.getName() + v_Item.getCode() + "：" + v_PLCTagAddress + "=" + v_DataItemValue);
+                v_LogBuffer.append("PLC Write " + v_Item.getName() + v_Item.getCode() + "：" + v_PLCTagAddress + "=" + v_DataItemValue).append("\n");
                 v_PlcWriteReqBuilder.put(v_Item.getCode() ,v_Item);
                 v_ItemCount++;
             }
@@ -196,10 +198,8 @@ public class PlcIOS200 implements IPlcIO
                 this.close();
             }
         }
-        finally 
-        {
-            $Logger.debug("PLC写：结束" + Date.getNowTime().getTime());
-        }
+        
+        $Logger.info(v_LogBuffer.toString());
         
         return v_Ret;
     }
@@ -219,9 +219,8 @@ public class PlcIOS200 implements IPlcIO
      */
     public Map<String ,Object> readDatas(PLCDatagramConfig i_Datagram ,long i_Timeout)
     {
-        $Logger.debug("PLC读：开始" + Date.getNowTime().getTime());
-        
-        Map<String ,Object> v_Datas = new LinkedHashMap<String ,Object>();
+        StringBuilder       v_LogBuffer = new StringBuilder();
+        Map<String ,Object> v_Datas     = new LinkedHashMap<String ,Object>();
         
         try
         {
@@ -243,11 +242,14 @@ public class PlcIOS200 implements IPlcIO
                 }
             }
             
+            String v_Titel = "PLC Read " + Help.NVL(this.plcConfig.getComment()) + this.plcConfig.getXid() + "." + Help.NVL(i_Datagram.getComment()) + i_Datagram.getXid();
+            $Logger.info(v_Titel);
+            v_LogBuffer.append(v_Titel).append("\n");
+            
             List<PLCDataItemConfig>        v_Items             = i_Datagram.getItems();
             int                            v_ItemCount         = 0;
             Map<String ,PLCDataItemConfig> v_PLCReadReqBuilder = new LinkedHashMap<String ,PLCDataItemConfig>();
             
-            $Logger.info("PLC Read " + Help.NVL(this.plcConfig.getComment()) + this.plcConfig.getXid() + "." + Help.NVL(i_Datagram.getComment()) + i_Datagram.getXid());
             for (PLCDataItemConfig v_Item : v_Items)
             {
                 String v_PLCTagAddress = v_Item.makePLCTagAddress();
@@ -256,7 +258,7 @@ public class PlcIOS200 implements IPlcIO
                     continue;
                 }
                 
-                $Logger.info("PLC Read " + v_Item.getName() + v_Item.getCode() + "：" + v_PLCTagAddress);
+                v_LogBuffer.append("PLC Read " + v_Item.getName() + v_Item.getCode() + "：" + v_PLCTagAddress).append("\n");
                 v_PLCReadReqBuilder.put(v_Item.getCode() ,v_Item);
                 v_ItemCount++;
             }
@@ -294,7 +296,7 @@ public class PlcIOS200 implements IPlcIO
                     v_Datas.put(v_Item.getCode() ,v_DataValue);
                 }
                 
-                $Logger.info("PLC Read " + v_Item.getName() + v_Item.getCode() + "=" + v_DataValue);
+                v_LogBuffer.append("PLC Read " + v_Item.getName() + v_Item.getCode() + "=" + v_DataValue).append("\n");
             }
         }
         catch (Exception exce)
@@ -305,10 +307,8 @@ public class PlcIOS200 implements IPlcIO
                 this.close();
             }
         }
-        finally 
-        {
-            $Logger.debug("PLC读：结束" + Date.getNowTime().getTime());
-        }
+        
+        $Logger.info(v_LogBuffer.toString());
         
         return v_Datas;
     }
