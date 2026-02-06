@@ -133,10 +133,13 @@ public class IoTSetConfig extends NodeConfig implements NodeConfigBase
      */
     public boolean check(Return<Object> io_Result)
     {
+        // 不再对父元素检查
+        /*
         if ( !super.check(io_Result) )
         {
             return false;
         }
+        */
         
         if ( Help.isNull(this.getDeviceXID()) )
         {
