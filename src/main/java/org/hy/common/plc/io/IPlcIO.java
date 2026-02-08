@@ -58,7 +58,7 @@ public interface IPlcIO
      *
      * @param i_Datagram  数据报文
      * @param i_Datas     数据集合
-     * @param i_Timeout   数据读写超时时长（单位：秒）
+     * @param i_Timeout   数据读写超时时长（单位：毫秒）
      * @return
      */
     public boolean writeDatas(PLCDatagramConfig i_Datagram ,Map<String ,Object> i_Datas ,long i_Timeout);
@@ -73,7 +73,7 @@ public interface IPlcIO
      * @version     v1.0
      *
      * @param i_Datagram  数据报文
-     * @param i_Timeout   数据读写超时时长（单位：秒）
+     * @param i_Timeout   数据读写超时时长（单位：毫秒）
      * @return
      */
     public Map<String ,Object> readDatas(PLCDatagramConfig i_Datagram ,long i_Timeout);

@@ -17,6 +17,7 @@ import org.hy.common.xml.XJava;
  * @createDate  2024-11-27
  * @version     v1.0
  *              v2.0  2025-08-19  优化：统一多个组件的PLC连接、读、写等操作
+ *              v2.1  2026-02-08  修正：超时时长从秒变为毫秒单位
  */
 public class PLC
 {
@@ -27,7 +28,7 @@ public class PLC
     /** 数据报文XID */
     private String datagramXID;
     
-    /** 数据读写超时时长（单位：秒） */
+    /** 数据读写超时时长（单位：毫秒） */
     private Long   timeout;
     
     
@@ -131,7 +132,7 @@ public class PLC
 
     
     /**
-     * 获取：数据读写超时时长（单位：秒）
+     * 获取：数据读写超时时长（单位：毫秒）
      */
     public Long getTimeout()
     {
@@ -140,9 +141,9 @@ public class PLC
 
     
     /**
-     * 设置：数据读写超时时长（单位：秒）
+     * 设置：数据读写超时时长（单位：毫秒）
      * 
-     * @param i_Timeout 数据读写超时时长（单位：秒）
+     * @param i_Timeout 数据读写超时时长（单位：毫秒）
      */
     public void setTimeout(Long i_Timeout)
     {

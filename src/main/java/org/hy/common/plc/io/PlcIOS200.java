@@ -26,6 +26,7 @@ import Moka7.S7Client;
  * @version     v1.0
  *              v1.1  2025-12-10  修正：自动重连机制的问题：在关闭close()时，将 plcConnect 赋值为空
  *              v1.2  2026-01-08  优化：日志输出逻辑，方便在《日志分析》页面上排查问题
+ *              v1.3  2026-02-08  修正：超时时长从秒变为毫秒单位
  */
 public class PlcIOS200 implements IPlcIO
 {
@@ -94,7 +95,7 @@ public class PlcIOS200 implements IPlcIO
      *
      * @param i_Datagram  数据报文
      * @param i_Datas     数据集合
-     * @param i_Timeout   数据读写超时时长（单位：秒）
+     * @param i_Timeout   数据读写超时时长（单位：毫秒）
      * @return
      */
     public boolean writeDatas(PLCDatagramConfig i_Datagram ,Map<String ,Object> i_Datas ,long i_Timeout)
@@ -113,7 +114,7 @@ public class PlcIOS200 implements IPlcIO
             
             synchronized ( this )
             {
-                if ( this.plcConnect == null )
+                if ( !this.isConnected() )
                 {
                     if ( !this.connect() )
                     {
@@ -214,7 +215,7 @@ public class PlcIOS200 implements IPlcIO
      * @version     v1.0
      *
      * @param i_Datagram  数据报文
-     * @param i_Timeout   数据读写超时时长（单位：秒）
+     * @param i_Timeout   数据读写超时时长（单位：毫秒）
      * @return
      */
     public Map<String ,Object> readDatas(PLCDatagramConfig i_Datagram ,long i_Timeout)
@@ -232,7 +233,7 @@ public class PlcIOS200 implements IPlcIO
             
             synchronized ( this )
             {
-                if ( this.plcConnect == null )
+                if ( !this.isConnected() )
                 {
                     if ( !this.connect() )
                     {
