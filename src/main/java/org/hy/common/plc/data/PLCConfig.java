@@ -22,7 +22,7 @@ public class PLCConfig implements XJavaID
     public static final int    $Port             = 102;
     
     /** 默认超时时长。单位：毫秒 */
-    public static final int    $Timeout          = 5000;
+    public static final long   $Timeout          = 5000L;
     
     
     
@@ -48,7 +48,7 @@ public class PLCConfig implements XJavaID
     private Integer       slot;
     
     /** 超时时长。单位：毫秒 */
-    private Integer       timeout;
+    private Long          timeout;
     
     /** 连接用户名称 */
     private String        userName;
@@ -191,7 +191,7 @@ public class PLCConfig implements XJavaID
     /**
      * 获取：超时时长。单位：毫秒
      */
-    public Integer getTimeout()
+    public Long getTimeout()
     {
         return timeout;
     }
@@ -202,7 +202,7 @@ public class PLCConfig implements XJavaID
      * 
      * @param i_Timeout 超时时长。单位：毫秒
      */
-    public void setTimeout(Integer i_Timeout)
+    public void setTimeout(Long i_Timeout)
     {
         this.timeout = i_Timeout;
     }

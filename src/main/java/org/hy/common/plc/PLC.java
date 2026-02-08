@@ -2,6 +2,7 @@ package org.hy.common.plc;
 
 import java.util.Map;
 
+import org.hy.common.Help;
 import org.hy.common.plc.data.PLCDatagramConfig;
 import org.hy.common.plc.data.XPLC;
 import org.hy.common.xml.XJava;
@@ -22,6 +23,11 @@ import org.hy.common.xml.XJava;
 public class PLC
 {
     
+    /** 默认数据读写超时时长。单位：毫秒 */
+    public static final long $Timeout = 5000L;
+    
+    
+    
     /** 物联设备XID */
     private String plcXID;
     
@@ -35,7 +41,7 @@ public class PLC
     
     public PLC()
     {
-        this.timeout = 10L;
+        this.timeout = $Timeout;
     }
     
     
@@ -67,7 +73,7 @@ public class PLC
         XPLC              v_XPLC      = (XPLC)              XJava.getObject(this.plcXID);
         PLCDatagramConfig v_XDatagram = (PLCDatagramConfig) XJava.getObject(this.datagramXID);
         
-        return v_XPLC.getPlcIO().writeDatas(v_XDatagram ,i_Datas ,this.timeout);
+        return v_XPLC.getPlcIO().writeDatas(v_XDatagram ,i_Datas ,Help.max(v_XPLC.getPlcIO().getPLCConfig().getTimeout() ,this.timeout));
     }
     
     
@@ -86,7 +92,7 @@ public class PLC
         XPLC                v_XPLC      = (XPLC)              XJava.getObject(this.plcXID);
         PLCDatagramConfig   v_XDatagram = (PLCDatagramConfig) XJava.getObject(this.datagramXID);
         
-        return v_XPLC.getPlcIO().readDatas(v_XDatagram ,this.timeout);
+        return v_XPLC.getPlcIO().readDatas(v_XDatagram ,Help.max(v_XPLC.getPlcIO().getPLCConfig().getTimeout() ,this.timeout));
     }
     
     
