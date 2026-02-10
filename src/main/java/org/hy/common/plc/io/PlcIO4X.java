@@ -209,6 +209,9 @@ public class PlcIO4X implements IPlcIO
         {
             v_Ret = false;
             $Logger.error(exce);
+        }
+        finally
+        {
             this.close(v_PlcConn);
         }
         
@@ -319,6 +322,9 @@ public class PlcIO4X implements IPlcIO
         catch (Exception exce)
         {
             $Logger.error(exce);
+        }
+        finally
+        {
             this.close(v_PlcConn);
         }
         

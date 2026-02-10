@@ -102,12 +102,12 @@ public class PlcConnectionPool
         v_PoolConfig.setMaxTotal(Help.max(Help.NVL(i_PLCConfig.getMaxConn()) ,1));
         v_PoolConfig.setMinIdle( Help.max(Help.NVL(i_PLCConfig.getMinIdle()) ,1));
         v_PoolConfig.setMaxIdle( Help.max(Help.NVL(i_PLCConfig.getMaxIdle()) ,1));
-        v_PoolConfig.setTestOnBorrow(true);                                                         // 借用连接时校验是否有效
-        v_PoolConfig.setTestOnReturn(true);                                                         // 归还连接时校验是否有效
-        v_PoolConfig.setTestWhileIdle(true);                                                        // 空闲时校验
-        v_PoolConfig.setMaxWait(Duration.ofMillis(i_PLCConfig.getTimeout()));                       // 设置获取连接的等待超时时长
-        v_PoolConfig.setTimeBetweenEvictionRuns(Duration.ofMillis(i_PLCConfig.getTimeout()* 10L) ); // 空闲检测间隔
-        v_PoolConfig.setMinEvictableIdleDuration(Duration.ofMillis(i_PLCConfig.getTimeout()));      // 空闲超时
+        v_PoolConfig.setTestOnBorrow(true);                                                           // 借用连接时校验是否有效
+        v_PoolConfig.setTestOnReturn(true);                                                           // 归还连接时校验是否有效
+        v_PoolConfig.setTestWhileIdle(true);                                                          // 空闲时校验
+        v_PoolConfig.setMaxWait(Duration.ofMillis(i_PLCConfig.getTimeout()));                         // 设置获取连接的等待超时时长
+        v_PoolConfig.setTimeBetweenEvictionRuns(Duration.ofMillis(i_PLCConfig.getTimeout() * 10L) );  // 空闲检测间隔
+        v_PoolConfig.setMinEvictableIdleDuration(Duration.ofMillis(i_PLCConfig.getTimeout() * 30L));  // 只有空闲超过多少的连接，才会被驱逐（驱逐门槛）
         
         PlcConnectionFactory v_PlcConnFactory = new PlcConnectionFactory(i_PLCConfig);
         this.pool = new GenericObjectPool<>(v_PlcConnFactory ,v_PoolConfig);
@@ -224,8 +224,11 @@ public class PlcConnectionPool
                     $Logger.error("PLC[" + this.plcConfig.getXid() + "] connection doesn't support reading.");
                     return null;
                 }
-                
-                return v_PLCConn;
+                else
+                {
+                    $Logger.info ("PLC[" + this.plcConfig.getXid() + "] connection succeed.");
+                    return v_PLCConn;
+                }
             }
             catch (Exception exce)
             {
@@ -238,9 +241,9 @@ public class PlcConnectionPool
 
 
         @Override
-        public PooledObject<PlcConnection> wrap(PlcConnection conn)
+        public PooledObject<PlcConnection> wrap(PlcConnection i_PlcConnection)
         {
-            return new DefaultPooledObject<>(conn);
+            return new DefaultPooledObject<>(i_PlcConnection);
         }
 
 
@@ -280,6 +283,7 @@ public class PlcConnectionPool
         @Override
         public void destroyObject(PooledObject<PlcConnection> i_PooledObject) throws Exception
         {
+            $Logger.info ("PLC[" + this.plcConfig.getXid() + "] close.");
             i_PooledObject.getObject().close();
         }
     }
