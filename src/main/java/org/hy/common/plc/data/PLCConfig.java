@@ -14,6 +14,7 @@ import org.hy.common.XJavaID;
  * @createDate  2024-05-11
  * @version     v1.0
  *              v2.0  2025-08-28  添加：出现异常时，是否重新连接
+ *              v3.0  2026-02-10  添加：连接池
  */
 public class PLCConfig implements XJavaID
 {
@@ -58,6 +59,15 @@ public class PLCConfig implements XJavaID
     
     /** 出现异常时，是否重新连接。默认值：真 */
     private Integer       reconnect;
+    
+    /** 最大连接数（不超过 PLC 设备限制，PLC 1200默认为8个） */
+    private Integer       maxConn;
+    
+    /** 最小空闲连接 */
+    private Integer       minIdle;
+    
+    /** 最大空闲连接 */
+    private Integer       maxIdle;
     
     
     
@@ -267,7 +277,67 @@ public class PLCConfig implements XJavaID
         this.reconnect = i_Reconnect;
     }
 
+    
+    /**
+     * 获取：最大连接数
+     */
+    public Integer getMaxConn()
+    {
+        return maxConn;
+    }
 
+    
+    /**
+     * 设置：最大连接数
+     * 
+     * @param i_MaxConn 最大连接数
+     */
+    public void setMaxConn(Integer i_MaxConn)
+    {
+        this.maxConn = i_MaxConn;
+    }
+
+
+    /**
+     * 获取：最小空闲连接
+     */
+    public Integer getMinIdle()
+    {
+        return minIdle;
+    }
+
+    
+    /**
+     * 设置：最小空闲连接
+     * 
+     * @param i_MinIdle 最小空闲连接
+     */
+    public void setMinIdle(Integer i_MinIdle)
+    {
+        this.minIdle = i_MinIdle;
+    }
+
+    
+    /**
+     * 获取：最大空闲连接
+     */
+    public Integer getMaxIdle()
+    {
+        return maxIdle;
+    }
+
+
+    /**
+     * 设置：最大空闲连接
+     * 
+     * @param i_MaxIdle 最大空闲连接
+     */
+    public void setMaxIdle(Integer i_MaxIdle)
+    {
+        this.maxIdle = i_MaxIdle;
+    }
+
+    
     /**
      * 设置XJava池中对象的ID标识。此方法不用用户调用设置值，是自动的。
      * 

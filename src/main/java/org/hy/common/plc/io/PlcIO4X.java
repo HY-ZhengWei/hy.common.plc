@@ -6,8 +6,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.plc4x.java.api.PlcConnection;
-import org.apache.plc4x.java.api.PlcConnectionManager;
-import org.apache.plc4x.java.api.PlcDriverManager;
 import org.apache.plc4x.java.api.messages.PlcReadRequest;
 import org.apache.plc4x.java.api.messages.PlcReadResponse;
 import org.apache.plc4x.java.api.messages.PlcWriteRequest;
@@ -15,10 +13,12 @@ import org.apache.plc4x.java.api.messages.PlcWriteResponse;
 import org.apache.plc4x.java.api.types.PlcResponseCode;
 import org.hy.common.Date;
 import org.hy.common.Help;
+import org.hy.common.Return;
 import org.hy.common.plc.data.PLCConfig;
 import org.hy.common.plc.data.PLCDataItemConfig;
 import org.hy.common.plc.data.PLCDatagramConfig;
 import org.hy.common.plc.enums.PLCDataType;
+import org.hy.common.plc.pool.PlcConnectionPool;
 import org.hy.common.xml.log.Logger;
 
 
@@ -35,6 +35,7 @@ import org.hy.common.xml.log.Logger;
  *                                修正：read和write两方法添加同步锁
  *              v1.2  2026-01-08  优化：日志输出逻辑，方便在《日志分析》页面上排查问题
  *              v1.3  2026-02-08  修正：超时时长从秒变为毫秒单位
+ *              v2.0  2026-02-10  添加：连接池
  */
 public class PlcIO4X implements IPlcIO
 {
@@ -43,10 +44,10 @@ public class PlcIO4X implements IPlcIO
     
     
     /** PLC设备配置 */
-    private PLCConfig     plcConfig;
+    private PLCConfig         plcConfig;
     
-    /** PLC连接对象 */
-    private PlcConnection plcConnect;
+    /** PLC连接池 */
+    private PlcConnectionPool plcConnectPool;
     
     
     
@@ -88,7 +89,7 @@ public class PlcIO4X implements IPlcIO
     @Deprecated
     public Object getConnectObject()
     {
-        return this.plcConnect;
+        return this.plcConnectPool;
     }
     
     
@@ -109,6 +110,7 @@ public class PlcIO4X implements IPlcIO
     {
         StringBuilder v_LogBuffer = new StringBuilder();
         boolean       v_Ret       = true;
+        PlcConnection v_PlcConn   = null;
         
         try
         {
@@ -119,17 +121,12 @@ public class PlcIO4X implements IPlcIO
                 return v_Ret;
             }
             
-            synchronized ( this )
+            v_PlcConn = this.connect().getParamObj();
+            if ( v_PlcConn == null )
             {
-                if ( !this.isConnected() )
-                {
-                    if ( !this.connect() )
-                    {
-                        $Logger.error("PlcXID[" + this.plcConfig.getXid() + "] connect error.");
-                        v_Ret = false;
-                        return v_Ret;
-                    }
-                }
+                $Logger.error("PlcXID[" + this.plcConfig.getXid() + "] connect error.");
+                v_Ret = false;
+                return v_Ret;
             }
             
             String v_Titel = "PLC Write " + Help.NVL(this.plcConfig.getComment()) + this.plcConfig.getXid() + "." + Help.NVL(i_Datagram.getComment()) + i_Datagram.getXid();
@@ -139,52 +136,52 @@ public class PlcIO4X implements IPlcIO
             List<PLCDataItemConfig> v_Items     = i_Datagram.getItems();
             int                     v_ItemCount = 0;
             PlcWriteResponse        v_Response  = null;
-            synchronized (this)
+            //synchronized (this)
+            //{
+            PlcWriteRequest.Builder v_PlcWriteReqBuilder = v_PlcConn.writeRequestBuilder();
+            
+            for (PLCDataItemConfig v_Item : v_Items)
             {
-                PlcWriteRequest.Builder v_PlcWriteReqBuilder = this.plcConnect.writeRequestBuilder();
-                
-                for (PLCDataItemConfig v_Item : v_Items)
+                String v_PLCTagAddress = v_Item.makePLCTagAddress();
+                if ( Help.isNull(v_PLCTagAddress) )
                 {
-                    String v_PLCTagAddress = v_Item.makePLCTagAddress();
-                    if ( Help.isNull(v_PLCTagAddress) )
-                    {
-                        continue;
-                    }
-                    
-                    Object v_DataItemValue = Help.getValueIgnoreCase(i_Datas ,v_Item.getCode());
-                    if ( v_DataItemValue == null )
-                    {
-                        $Logger.error("写入PLC数据为空：" + v_Item.getCode() + " " + v_Item.getName()
-                                    + "\n寄存器名：" + v_Item.getRegisterType().getValue()
-                                    + "\n寄存编号：" + v_Item.getRegisterNo()
-                                    + "\n偏移数量：" + v_Item.getRegisterOffset()
-                                    + "\n数据类型：" + v_Item.getDataType().getValue());
-                        v_Ret = false;
-                        break;
-                    }
-                    
-                    v_LogBuffer.append("PLC Write " + v_Item.getName() + v_Item.getCode() + "：" + v_PLCTagAddress + "=" + v_DataItemValue).append("\n");
-                    v_PlcWriteReqBuilder.addTagAddress(v_Item.getCode() ,v_PLCTagAddress ,v_DataItemValue);
-                    v_ItemCount++;
+                    continue;
                 }
                 
-                if ( v_ItemCount <= 0 )
+                Object v_DataItemValue = Help.getValueIgnoreCase(i_Datas ,v_Item.getCode());
+                if ( v_DataItemValue == null )
                 {
+                    $Logger.error("写入PLC数据为空：" + v_Item.getCode() + " " + v_Item.getName()
+                                + "\n寄存器名：" + v_Item.getRegisterType().getValue()
+                                + "\n寄存编号：" + v_Item.getRegisterNo()
+                                + "\n偏移数量：" + v_Item.getRegisterOffset()
+                                + "\n数据类型：" + v_Item.getDataType().getValue());
                     v_Ret = false;
-                    $Logger.error("DatagramXID[" + i_Datagram.getXid() + "] itemCount is 0");
-                    return v_Ret;
+                    break;
                 }
-                else if ( v_Ret )
-                {
-                    long            v_Timeout         = i_Timeout <= 0L ? 0L : i_Timeout;
-                    PlcWriteRequest v_PlcWriteRequest = v_PlcWriteReqBuilder.build();
-                    v_Response = v_PlcWriteRequest.execute().get(v_Timeout ,TimeUnit.MILLISECONDS);
-                }
-                else
-                {
-                    return v_Ret;
-                }
+                
+                v_LogBuffer.append("PLC Write " + v_Item.getName() + v_Item.getCode() + "：" + v_PLCTagAddress + "=" + v_DataItemValue).append("\n");
+                v_PlcWriteReqBuilder.addTagAddress(v_Item.getCode() ,v_PLCTagAddress ,v_DataItemValue);
+                v_ItemCount++;
             }
+            
+            if ( v_ItemCount <= 0 )
+            {
+                v_Ret = false;
+                $Logger.error("DatagramXID[" + i_Datagram.getXid() + "] itemCount is 0");
+                return v_Ret;
+            }
+            else if ( v_Ret )
+            {
+                long            v_Timeout         = i_Timeout <= 0L ? 0L : i_Timeout;
+                PlcWriteRequest v_PlcWriteRequest = v_PlcWriteReqBuilder.build();
+                v_Response = v_PlcWriteRequest.execute().get(v_Timeout ,TimeUnit.MILLISECONDS);
+            }
+            else
+            {
+                return v_Ret;
+            }
+            //}
             
             // 检查是否成功
             for (PLCDataItemConfig v_Item : v_Items)
@@ -212,10 +209,7 @@ public class PlcIO4X implements IPlcIO
         {
             v_Ret = false;
             $Logger.error(exce);
-            if ( this.plcConfig.getReconnect() >= 1 )
-            {
-                this.close();
-            }
+            this.close(v_PlcConn);
         }
         
         $Logger.info(v_LogBuffer.toString());
@@ -240,6 +234,7 @@ public class PlcIO4X implements IPlcIO
     {
         StringBuilder       v_LogBuffer = new StringBuilder();
         Map<String ,Object> v_Datas     = new LinkedHashMap<String ,Object>();
+        PlcConnection       v_PlcConn   = null;
         
         v_LogBuffer.append(Date.getNowTime().getFullMilli()).append("\n");
         
@@ -251,16 +246,11 @@ public class PlcIO4X implements IPlcIO
                 return v_Datas;
             }
             
-            synchronized ( this )
+            v_PlcConn = this.connect().getParamObj();
+            if ( v_PlcConn == null )
             {
-                if ( !this.isConnected() )
-                {
-                    if ( !this.connect() )
-                    {
-                        $Logger.error("PlcXID[" + this.plcConfig.getXid() + "] connect error.");
-                        return v_Datas;
-                    }
-                }
+                $Logger.error("PlcXID[" + this.plcConfig.getXid() + "] connect error.");
+                return v_Datas;
             }
             
             String v_Titel = "PLC Read " + Help.NVL(this.plcConfig.getComment()) + this.plcConfig.getXid() + "." + Help.NVL(i_Datagram.getComment()) + i_Datagram.getXid();
@@ -270,33 +260,33 @@ public class PlcIO4X implements IPlcIO
             int                     v_ItemCount       = 0;
             List<PLCDataItemConfig> v_Items           = i_Datagram.getItems();
             PlcReadResponse         v_PLCReadResponse = null;
-            synchronized ( this )
+            // synchronized ( this )
+            // {
+            PlcReadRequest.Builder v_PLCReadReqBuilder = v_PlcConn.readRequestBuilder();
+            
+            for (PLCDataItemConfig v_Item : v_Items)
             {
-                PlcReadRequest.Builder v_PLCReadReqBuilder = this.plcConnect.readRequestBuilder();
-                
-                for (PLCDataItemConfig v_Item : v_Items)
+                String v_PLCTagAddress = v_Item.makePLCTagAddress();
+                if ( Help.isNull(v_PLCTagAddress) )
                 {
-                    String v_PLCTagAddress = v_Item.makePLCTagAddress();
-                    if ( Help.isNull(v_PLCTagAddress) )
-                    {
-                        continue;
-                    }
-                    
-                    v_LogBuffer.append("PLC Read " + v_Item.getName() + v_Item.getCode() + "：" + v_PLCTagAddress).append("\n");
-                    v_PLCReadReqBuilder.addTagAddress(v_Item.getCode() ,v_PLCTagAddress);
-                    v_ItemCount++;
+                    continue;
                 }
                 
-                if ( v_ItemCount <= 0 )
-                {
-                    $Logger.error("DatagramXID[" + i_Datagram.getXid() + "] itemCount is 0");
-                    return v_Datas;
-                }
-                
-                long           v_Timeout        = i_Timeout <= 0L ? 0L : i_Timeout;
-                PlcReadRequest v_PlcReadRequest = v_PLCReadReqBuilder.build();
-                v_PLCReadResponse = v_PlcReadRequest.execute().get(v_Timeout ,TimeUnit.MILLISECONDS);
+                v_LogBuffer.append("PLC Read " + v_Item.getName() + v_Item.getCode() + "：" + v_PLCTagAddress).append("\n");
+                v_PLCReadReqBuilder.addTagAddress(v_Item.getCode() ,v_PLCTagAddress);
+                v_ItemCount++;
             }
+            
+            if ( v_ItemCount <= 0 )
+            {
+                $Logger.error("DatagramXID[" + i_Datagram.getXid() + "] itemCount is 0");
+                return v_Datas;
+            }
+            
+            long           v_Timeout        = i_Timeout <= 0L ? 0L : i_Timeout;
+            PlcReadRequest v_PlcReadRequest = v_PLCReadReqBuilder.build();
+            v_PLCReadResponse = v_PlcReadRequest.execute().get(v_Timeout ,TimeUnit.MILLISECONDS);
+            // }
             
             for (PLCDataItemConfig v_Item : v_Items)
             {
@@ -329,10 +319,7 @@ public class PlcIO4X implements IPlcIO
         catch (Exception exce)
         {
             $Logger.error(exce);
-            if ( this.plcConfig.getReconnect() >= 1 )
-            {
-                this.close();
-            }
+            this.close(v_PlcConn);
         }
         
         $Logger.info(v_LogBuffer.toString());
@@ -445,89 +432,50 @@ public class PlcIO4X implements IPlcIO
      * @author      ZhengWei(HY)
      * @createDate  2024-05-11
      * @version     v1.0
+     *              v2.0  2026-02-09  添加：升级为连接池
      *
-     * @return
+     * @return  Return.boolean   表示是否连接成功
+     *          Return.paramObj  表示PLC连接对象
+     * @throws Exception 
      */
-    public synchronized boolean connect() 
+    public synchronized Return<PlcConnection> connect() throws Exception 
     {
-        if ( this.plcConfig == null )
-        {
-            Exception v_Error = new NullPointerException("PLC is null.");
-            $Logger.error(v_Error);
-            return false;
-        }
+        Return<PlcConnection> v_Ret = new Return<PlcConnection>(false);
         
-        if ( Help.isNull(this.plcConfig.getProtocol()) )
+        if ( this.plcConnectPool == null )
         {
-            Exception v_Error = new NullPointerException("PLC[" + this.plcConfig.getXid() + "]'s Protocol is null.");
-            $Logger.error(v_Error);
-            return false;
-        }
-        
-        if ( Help.isNull(this.plcConfig.getHost()) )
-        {
-            Exception v_Error = new NullPointerException("PLC[" + this.plcConfig.getXid() + "]'s Host is null.");
-            $Logger.error(v_Error);
-            return false;
-        }
-        
-        if ( Help.isNull(this.plcConfig.getPort()) )
-        {
-            Exception v_Error = new NullPointerException("PLC[" + this.plcConfig.getXid() + "]'s Port is null.");
-            $Logger.error(v_Error);
-            return false;
-        }
-        
-        try
-        {
-            // 机架号0和插槽号1。在 Siemens 自有软件中的 rack=0&slot=1 
-            // PLC4X 或类似的第三方库，正确的格式是 remote-rack&remote-slot
-            // 立体仓库   10.1.154.112
-            // WYS71200 10.1.154.131、10.1.154.132 
-            // 格式为 s7://username:password@IP:Port?timeout=5000
-            // {protocol-code}:({transport-code})?//{transport-address}(?{parameter-string})?'
-            StringBuilder v_ConnString = new StringBuilder();
-            v_ConnString.append(this.plcConfig.getProtocol()).append("://");
-            if ( !Help.isNull(this.plcConfig.getUserName()) && !Help.isNull(this.plcConfig.getUserPassword()) )
+            if ( this.plcConfig == null )
             {
-                v_ConnString.append(this.plcConfig.getUserName());
-                v_ConnString.append(":");
-                v_ConnString.append(this.plcConfig.getUserPassword());
-                v_ConnString.append("@");
+                Exception v_Error = new NullPointerException("PLC is null.");
+                $Logger.error(v_Error);
+                return v_Ret;
             }
             
-            v_ConnString.append(this.plcConfig.getHost());
-            v_ConnString.append(":");
-            v_ConnString.append(this.plcConfig.getPort());
-            v_ConnString.append("?timeout=").append(this.plcConfig.getTimeout());
-            
-            if ( this.plcConfig.getRack() != null )
+            if ( Help.isNull(this.plcConfig.getProtocol()) )
             {
-                v_ConnString.append("&remote-rack=").append(this.plcConfig.getRack());
-            }
-            if ( this.plcConfig.getSlot() != null )
-            {
-                v_ConnString.append("&remote-slot=").append(this.plcConfig.getSlot());
+                Exception v_Error = new NullPointerException("PLC[" + this.plcConfig.getXid() + "]'s Protocol is null.");
+                $Logger.error(v_Error);
+                return v_Ret;
             }
             
-            PlcDriverManager     v_PlcDriverManager     = PlcDriverManager.getDefault();
-            PlcConnectionManager v_PlcConnectionManager = v_PlcDriverManager.getConnectionManager();
-            PlcConnection        v_PLCConn              = v_PlcConnectionManager.getConnection(v_ConnString.toString());
-            if ( !v_PLCConn.getMetadata().isReadSupported() )
+            if ( Help.isNull(this.plcConfig.getHost()) )
             {
-                $Logger.error("PLC[" + this.plcConfig.getXid() + "] connection doesn't support reading.");
-                return false;
+                Exception v_Error = new NullPointerException("PLC[" + this.plcConfig.getXid() + "]'s Host is null.");
+                $Logger.error(v_Error);
+                return v_Ret;
             }
             
-            this.plcConnect = v_PLCConn;
-            return true;
-        }
-        catch (Exception exce)
-        {
-            $Logger.error("PLC[" + this.plcConfig.getXid() + "] connection error." ,exce);
+            if ( Help.isNull(this.plcConfig.getPort()) )
+            {
+                Exception v_Error = new NullPointerException("PLC[" + this.plcConfig.getXid() + "]'s Port is null.");
+                $Logger.error(v_Error);
+                return v_Ret;
+            }
+            
+            this.plcConnectPool = new PlcConnectionPool(this.plcConfig);
         }
         
-        return false;
+        return v_Ret.set(true).setParamObj(this.plcConnectPool.borrowConnection());
     }
     
     
@@ -543,13 +491,13 @@ public class PlcIO4X implements IPlcIO
      */
     public boolean isConnected()
     {
-        if ( this.plcConnect == null )
+        if ( this.plcConnectPool == null )
         {
             return false;
         }
         else
         {
-            return this.plcConnect.isConnected();
+            return true;  // this.plcConnect.isConnected();
         }
     }
     
@@ -561,19 +509,20 @@ public class PlcIO4X implements IPlcIO
      * @author      ZhengWei(HY)
      * @createDate  2025-08-19
      * @version     v1.0
-     *
+     *              v2.0  2026-02-09  添加：升级为连接池
+     * 
+     * @param i_PlcConnection  PLC连接对象
      */
-    public synchronized void close()
+    public void close(PlcConnection i_PlcConnection)
     {
-        if ( this.plcConnect == null )
+        if ( this.plcConnectPool == null )
         {
             return;
         }
         
         try
         {
-            this.plcConnect.close();
-            this.plcConnect = null;
+            this.plcConnectPool.returnConnection(i_PlcConnection);
         }
         catch (Exception exce)
         {

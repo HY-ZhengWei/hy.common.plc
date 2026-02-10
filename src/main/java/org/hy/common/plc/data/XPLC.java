@@ -2,7 +2,9 @@ package org.hy.common.plc.data;
 
 import java.io.Serializable;
 
+import org.apache.plc4x.java.api.PlcConnection;
 import org.hy.common.Help;
+import org.hy.common.Return;
 import org.hy.common.XJavaID;
 import org.hy.common.plc.enums.PLCProtocolType;
 import org.hy.common.plc.io.IPlcIO;
@@ -64,21 +66,22 @@ public class XPLC implements XJavaID ,Serializable
      * @version     v1.0
      *
      * @return
+     * @throws Exception 
      */
-    public synchronized boolean connect() 
+    public synchronized Return<PlcConnection> connect()
     {
         if ( this.plcConfig == null )
         {
             Exception v_Error = new NullPointerException("PLC is null.");
             $Logger.error(v_Error);
-            return false;
+            return new Return<PlcConnection>(false);
         }
         
         if ( Help.isNull(this.plcConfig.getProtocol()) )
         {
             Exception v_Error = new NullPointerException("PLC[" + this.plcConfig.getXid() + "]'s Protocol is null.");
             $Logger.error(v_Error);
-            return false;
+            return new Return<PlcConnection>(false);
         }
         
         if ( PLCProtocolType.S7_200_Smart.equals(PLCProtocolType.get(this.plcConfig.getProtocol())) )
@@ -90,7 +93,15 @@ public class XPLC implements XJavaID ,Serializable
             this.plcIO = new PlcIO4X(this.plcConfig);
         }
         
-        return this.plcIO.connect();
+        try
+        {
+            return this.plcIO.connect();
+        }
+        catch (Exception exce)
+        {
+            $Logger.error(exce);
+        }
+        return new Return<PlcConnection>(false);
     }
     
     
@@ -118,10 +129,11 @@ public class XPLC implements XJavaID ,Serializable
      * @createDate  2025-08-04
      * @version     v1.0
      *
+     * @param i_PlcConnection  PLC连接对象
      */
-    public void close()
+    public void close(PlcConnection i_PlcConnection)
     {
-        this.plcIO.close();
+        this.plcIO.close(i_PlcConnection);
     }
     
     

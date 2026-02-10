@@ -103,10 +103,10 @@ public class JU_Smart200
         v_Config.setSlot(1);
         
         XPLC v_XPLC = new XPLC(v_Config);
-        if ( v_XPLC.connect() )
+        if ( v_XPLC.connect().booleanValue() )
         {
             System.out.println("成功连接到200!");
-            v_XPLC.close();
+            v_XPLC.close(null);
         }
         else
         {
@@ -126,10 +126,10 @@ public class JU_Smart200
         v_Config.setSlot(1);
         
         XPLC v_XPLC = new XPLC(v_Config);
-        if ( v_XPLC.connect() )
+        if ( v_XPLC.connect().booleanValue() )
         {
             System.out.println("成功连接到1200!");
-            v_XPLC.close();
+            v_XPLC.close(null);
         }
         else
         {

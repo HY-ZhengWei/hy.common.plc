@@ -4,7 +4,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.plc4x.java.api.PlcConnection;
 import org.hy.common.Help;
+import org.hy.common.Return;
 import org.hy.common.plc.data.PLCConfig;
 import org.hy.common.plc.data.PLCDataItemConfig;
 import org.hy.common.plc.data.PLCDatagramConfig;
@@ -116,7 +118,7 @@ public class PlcIOS200 implements IPlcIO
             {
                 if ( !this.isConnected() )
                 {
-                    if ( !this.connect() )
+                    if ( !this.connect().booleanValue() )
                     {
                         $Logger.error("PlcXID[" + this.plcConfig.getXid() + "] connect error.");
                         v_Ret = false;
@@ -196,7 +198,7 @@ public class PlcIOS200 implements IPlcIO
             $Logger.error(exce);
             if ( this.plcConfig.getReconnect() >= 1 )
             {
-                this.close();
+                this.close(null);
             }
         }
         
@@ -235,7 +237,7 @@ public class PlcIOS200 implements IPlcIO
             {
                 if ( !this.isConnected() )
                 {
-                    if ( !this.connect() )
+                    if ( !this.connect().booleanValue() )
                     {
                         $Logger.error("PlcXID[" + this.plcConfig.getXid() + "] connect error.");
                         return v_Datas;
@@ -305,7 +307,7 @@ public class PlcIOS200 implements IPlcIO
             $Logger.error(exce);
             if ( this.plcConfig.getReconnect() >= 1 )
             {
-                this.close();
+                this.close(null);
             }
         }
         
@@ -323,9 +325,11 @@ public class PlcIOS200 implements IPlcIO
      * @createDate  2025-08-19
      * @version     v1.0
      *
+     * @return  Return.boolean   表示是否连接成功
+     *          Return.paramObj  表示PLC连接对象
      * @return
      */
-    public synchronized boolean connect()
+    public synchronized Return<PlcConnection> connect()
     {
         // 创建S7客户端实例
         this.plcConnect = new S7Client();
@@ -338,12 +342,12 @@ public class PlcIOS200 implements IPlcIO
         int v_Result = this.plcConnect.ConnectTo(this.plcConfig.getHost() ,v_Rack ,v_Slot);
         if ( v_Result == 0 )
         {
-            return true;
+            return new Return<PlcConnection>(true);
         }
         else
         {
             $Logger.error("PLC[" + this.plcConfig.getXid() + "] connection error.");
-            return false;
+            return new Return<PlcConnection>(false);
         }
     }
     
@@ -379,8 +383,9 @@ public class PlcIOS200 implements IPlcIO
      * @createDate  2025-08-19
      * @version     v1.0
      *
+     * @param i_PlcConnection  PLC连接对象
      */
-    public synchronized void close()
+    public synchronized void close(PlcConnection i_PlcConnection)
     {
         if ( this.plcConnect == null )
         {

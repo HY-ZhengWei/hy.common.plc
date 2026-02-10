@@ -2,6 +2,8 @@ package org.hy.common.plc.io;
 
 import java.util.Map;
 
+import org.apache.plc4x.java.api.PlcConnection;
+import org.hy.common.Return;
 import org.hy.common.plc.data.PLCConfig;
 import org.hy.common.plc.data.PLCDatagramConfig;
 
@@ -87,9 +89,10 @@ public interface IPlcIO
      * @createDate  2025-08-19
      * @version     v1.0
      *
-     * @return
+     * @return  Return.boolean   表示是否连接成功
+     *          Return.paramObj  表示PLC连接对象
      */
-    public boolean connect();
+    public Return<PlcConnection> connect() throws Exception;
     
     
     
@@ -112,8 +115,10 @@ public interface IPlcIO
      * @author      ZhengWei(HY)
      * @createDate  2025-08-19
      * @version     v1.0
-     *
+     *              v2.0  2026-02-09  添加：升级为连接池
+     * 
+     * @param i_PlcConnection  PLC连接对象
      */
-    public void close();
+    public void close(PlcConnection i_PlcConnection);
     
 }
