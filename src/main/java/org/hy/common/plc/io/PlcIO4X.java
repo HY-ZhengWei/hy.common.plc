@@ -195,7 +195,7 @@ public class PlcIO4X implements IPlcIO
                 if ( v_Response.getResponseCode(v_Item.getCode()) != PlcResponseCode.OK )
                 {
                     $Logger.error("写入PLC数据失败：" + v_Item.getCode() + " " + v_Item.getName()
-                                + "\n" + v_Response.getResponseCode(v_Item.getCode()).getValue() + "=" + v_Response.getResponseCode(v_Item.getCode()).name()
+                                + "\n" + v_Response.getResponseCode(v_Item.getCode()).getValue() + " = " + v_Response.getResponseCode(v_Item.getCode()).name()
                                 + "\n寄存器名：" + v_Item.getRegisterType().getValue()
                                 + "\n寄存编号：" + v_Item.getRegisterNo()
                                 + "\n偏移数量：" + v_Item.getRegisterOffset()
@@ -302,7 +302,7 @@ public class PlcIO4X implements IPlcIO
                 if ( v_PLCReadResponse.getResponseCode(v_Item.getCode()) != PlcResponseCode.OK )
                 {
                     $Logger.error("读取PLC数据失败：" + v_Item.getCode() + " " + v_Item.getName() 
-                                + "\n" + v_PLCReadResponse.getResponseCode(v_Item.getCode()).getValue() + "=" + v_PLCReadResponse.getResponseCode(v_Item.getCode()).name()
+                                + "\n" + v_PLCReadResponse.getResponseCode(v_Item.getCode()).getValue() + " = " + v_PLCReadResponse.getResponseCode(v_Item.getCode()).name()
                                 + "\n寄存器名：" + v_Item.getRegisterType().getValue()
                                 + "\n寄存编号：" + v_Item.getRegisterNo()
                                 + "\n偏移数量：" + v_Item.getRegisterOffset()
@@ -505,6 +505,21 @@ public class PlcIO4X implements IPlcIO
         {
             return true;  // this.plcConnect.isConnected();
         }
+    }
+    
+    
+    
+    /**
+     * 保活
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2026-07-16
+     * @version     v1.0
+     *
+     */
+    public void keepalive()
+    {
+        
     }
     
     

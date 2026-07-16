@@ -1,8 +1,14 @@
 package org.hy.common.plc.junit;
 
+import org.hy.common.Help;
 import org.hy.common.plc.data.PLCConfig;
+import org.hy.common.plc.data.PLCDataItemConfig;
+import org.hy.common.plc.data.PLCDatagramConfig;
 import org.hy.common.plc.data.XPLC;
+import org.hy.common.plc.enums.PLCDataType;
 import org.hy.common.plc.enums.PLCProtocolType;
+import org.hy.common.plc.enums.PLCRegisterType;
+import org.junit.Test;
 
 import Moka7.S7;
 import Moka7.S7Client;
@@ -21,12 +27,12 @@ import Moka7.S7Client;
 public class JU_Smart200
 {
     
-    public static void main(String []  i_Args)
+    public static void main(String []  i_Args) throws InterruptedException
     {
         // java -cp hy.common.plc.jar:* Moka7.S7Demo
-        connectS7200Moka();
+        // connectS7200Moka();
         // connectS71200();
-        // connectS7200();
+        connectS7200();
     }
     
     
@@ -93,11 +99,11 @@ public class JU_Smart200
     
     
     
-    public static void connectS7200()
+    public static void connectS7200() throws InterruptedException
     {
         PLCConfig v_Config = new PLCConfig();
-        v_Config.setProtocol(PLCProtocolType.S7.getValue());
-        v_Config.setHost("192.168.2.131");
+        v_Config.setProtocol(PLCProtocolType.S7_200_Smart.getValue());
+        v_Config.setHost("192.168.0.110");
         v_Config.setPort(102);
         v_Config.setRack(0);
         v_Config.setSlot(1);
@@ -106,6 +112,24 @@ public class JU_Smart200
         if ( v_XPLC.connect().booleanValue() )
         {
             System.out.println("成功连接到200!");
+            
+            PLCDataItemConfig v_DataItem = new PLCDataItemConfig();
+            v_DataItem.setCode("C001");
+            v_DataItem.setName("N001");
+            v_DataItem.setRegisterType(PLCRegisterType.Memory);
+            v_DataItem.setRegisterNo(0);
+            v_DataItem.setRegisterOffset("MX21.1");
+            v_DataItem.setDataType(PLCDataType.Bool);
+            
+            PLCDatagramConfig v_Datagram = new PLCDatagramConfig();
+            v_Datagram.getItems().add(v_DataItem);
+            
+            for (int x=1; x<=100; x++)
+            {
+                Help.print(v_XPLC.getPlcIO().readDatas(v_Datagram ,5000));
+                Thread.sleep(100);
+            }
+            
             v_XPLC.close(null);
         }
         else
@@ -134,6 +158,52 @@ public class JU_Smart200
         else
         {
             System.out.println("连接失败1200");
+        }
+    }
+    
+    
+    
+    @Test
+    public void test_S7200Smart() 
+    {
+        S7Client client = new S7Client();
+        String plcIp = "192.168.0.110";
+
+        try {
+            // 2. 建立连接 200Smart固定机架0，槽位1
+            int connectRet = client.ConnectTo(plcIp, 0, 1);
+            if (connectRet != 0) {
+                System.out.println("连接PLC失败：" + client.ErrorText(connectRet));
+                return;
+            }
+            System.out.println("PLC连接成功");
+
+            // 3. 定义缓冲区：读取1个位，缓冲区1字节足够
+            byte[] buffer = new byte[1];
+
+            // 读取 M21.1
+            // 参数：区域、DB号、起始字节、读取数量、数据长度、缓存
+            int readRet = client.ReadArea(
+                    S7.S7AreaMK,    // M存储区
+                    0,                    // M区DB固定0
+                    21,                   // 起始字节 M21
+                    1,                    // 读取1个位
+                    buffer
+            );
+
+            if (readRet == 0) {
+                int m21_1 = buffer[0] & 0x01;
+                System.out.println("M21.1 当前值：" + m21_1);
+            } else {
+                // 打印错误信息，返回4就是TCP接收超时
+                System.out.println("读取失败 错误码：" + readRet + " 说明：" + client.ErrorText(readRet));
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            // 4. 断开连接释放资源
+            client.Disconnect();
         }
     }
     

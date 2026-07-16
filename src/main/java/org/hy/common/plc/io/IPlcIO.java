@@ -110,6 +110,18 @@ public interface IPlcIO
     
     
     /**
+     * 保活
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2026-07-16
+     * @version     v1.0
+     *
+     */
+    public void keepalive();
+    
+    
+    
+    /**
      * 关闭连接
      * 
      * @author      ZhengWei(HY)

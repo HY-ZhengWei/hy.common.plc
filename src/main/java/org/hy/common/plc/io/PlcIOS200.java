@@ -10,6 +10,8 @@ import org.hy.common.Return;
 import org.hy.common.plc.data.PLCConfig;
 import org.hy.common.plc.data.PLCDataItemConfig;
 import org.hy.common.plc.data.PLCDatagramConfig;
+import org.hy.common.plc.enums.PLCDataType;
+import org.hy.common.plc.enums.PLCRegisterType;
 import org.hy.common.plc.util.PLCAddress;
 import org.hy.common.plc.util.PLCByteData;
 import org.hy.common.xml.log.Logger;
@@ -29,6 +31,7 @@ import Moka7.S7Client;
  *              v1.1  2025-12-10  修正：自动重连机制的问题：在关闭close()时，将 plcConnect 赋值为空
  *              v1.2  2026-01-08  优化：日志输出逻辑，方便在《日志分析》页面上排查问题
  *              v1.3  2026-02-08  修正：超时时长从秒变为毫秒单位
+ *              v1.4  2026-07-15  优化：异常时输出错误编码的含义
  */
 public class PlcIOS200 implements IPlcIO
 {
@@ -181,7 +184,7 @@ public class PlcIOS200 implements IPlcIO
                     if ( v_Result != 0 )
                     {
                         $Logger.error("写入PLC数据失败：" + v_KeyValue.getKey() + " " + v_Item.getName()
-                                    + "\n异常编码：" + v_Result
+                                    + "\n异常编码：" + v_Result + " = " + S7Client.ErrorText(v_Result)
                                     + "\n寄存器名：" + v_Item.getRegisterType().getValue()
                                     + "\n寄存编号：" + v_Item.getRegisterNo()
                                     + "\n偏移数量：" + v_Item.getRegisterOffset()
@@ -285,7 +288,7 @@ public class PlcIOS200 implements IPlcIO
                 if ( v_Result != 0 )
                 {
                     $Logger.error("读取PLC数据失败：" + v_Item.getCode() + " " + v_Item.getName() 
-                                + "\n异常编码：" + v_Result
+                                + "\n异常编码：" + v_Result + " = " + S7Client.ErrorText(v_Result)
                                 + "\n寄存器名：" + v_Item.getRegisterType().getValue()
                                 + "\n寄存编号：" + v_Item.getRegisterNo()
                                 + "\n偏移数量：" + v_Item.getRegisterOffset()
@@ -371,6 +374,37 @@ public class PlcIOS200 implements IPlcIO
         else
         {
             return this.plcConnect.Connected;
+        }
+    }
+    
+    
+    
+    /**
+     * 保活
+     * 
+     * @author      ZhengWei(HY)
+     * @createDate  2026-07-16
+     * @version     v1.0
+     *
+     */
+    public synchronized void keepalive()
+    {
+        PLCDataItemConfig v_DataItem = new PLCDataItemConfig();
+        v_DataItem.setCode("keepalive");
+        v_DataItem.setName("keepalive");
+        v_DataItem.setRegisterType(PLCRegisterType.Memory);
+        v_DataItem.setRegisterNo(0);
+        v_DataItem.setRegisterOffset("MX0.0");
+        v_DataItem.setDataType(PLCDataType.Bool);
+        
+        PLCDatagramConfig v_Datagram = new PLCDatagramConfig();
+        v_Datagram.getItems().add(v_DataItem);
+        
+        Map<String ,Object> v_Datas = this.readDatas(v_Datagram ,500);
+        if ( Help.isNull(v_Datas) || !v_Datas.containsKey("keepalive") )
+        {
+            this.close(null);
+            this.connect();
         }
     }
     
