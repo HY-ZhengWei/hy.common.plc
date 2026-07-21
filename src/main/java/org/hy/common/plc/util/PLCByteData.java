@@ -3,6 +3,7 @@ package org.hy.common.plc.util;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+import org.hy.common.ByteHelp;
 import org.hy.common.Help;
 import org.hy.common.plc.enums.PLCDataType;
 
@@ -34,9 +35,10 @@ public class PLCByteData
      * @param i_PLCDataType  寄存器的数据类型
      * @param i_PLCAddress   PLC通讯数据地址
      * @param i_Value        数据
+     * @param i_OrgByteData  原始数据，即刚刚读取数据，仅对BOOL类型生效
      * @return
      */
-    public static byte [] setByteData(PLCDataType i_PLCDataType ,PLCAddress i_PLCAddress ,Object i_Value)
+    public static byte [] setByteData(PLCDataType i_PLCDataType ,PLCAddress i_PLCAddress ,Object i_Value ,byte [] i_OrgByteData)
     {
         byte [] v_ByteData = null;
         
@@ -60,13 +62,32 @@ public class PLCByteData
             {
                 v_Value = (Boolean) i_Value;
             }
+            else if ( i_Value instanceof Integer )
+            {
+                v_Value = ((Integer) i_Value).intValue() >= 1;
+            }
+            else if ( i_Value instanceof String )
+            {
+                if ( Help.isNumber(i_Value.toString()) )
+                {
+                    v_Value = Integer.parseInt(i_Value.toString()) >= 1;
+                }
+                else
+                {
+                    v_Value = Boolean.valueOf(i_Value.toString());
+                }
+            }
             else
             {
                 v_Value = Boolean.valueOf(i_Value.toString());
             }
             
-            v_ByteData = new byte[1];
+            v_ByteData = i_OrgByteData;
             S7.SetBitAt(v_ByteData ,0 ,i_PLCAddress.getOffsetBit() ,v_Value);
+            System.out.println("\n\n\n" + i_PLCAddress.getOffsetBit());
+            System.out.println(i_Value);
+            System.out.println(v_Value);
+            System.out.println(ByteHelp.byteToInt(v_ByteData) + "\n\n\n");
         }
         // 8位字节
         else if ( PLCDataType.Byte.equals(i_PLCDataType) )

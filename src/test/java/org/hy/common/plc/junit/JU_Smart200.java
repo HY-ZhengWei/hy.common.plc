@@ -1,5 +1,6 @@
 package org.hy.common.plc.junit;
 
+import org.hy.common.ByteHelp;
 import org.hy.common.Help;
 import org.hy.common.plc.data.PLCConfig;
 import org.hy.common.plc.data.PLCDataItemConfig;
@@ -205,6 +206,23 @@ public class JU_Smart200
             // 4. 断开连接释放资源
             client.Disconnect();
         }
+    }
+    
+    
+    
+    @Test
+    public void test_Set()
+    {
+        for (int x=0; x<=7; x++)
+        {
+            byte [] v_ByteData = new byte[1];
+            S7.SetBitAt(v_ByteData ,0 ,x ,true);
+            System.out.println(ByteHelp.byteToInt(v_ByteData));
+        }
+        
+        byte [] v_ByteData = new byte[1];
+        S7.SetBitAt(v_ByteData ,0 ,2 ,true);
+        System.out.println(ByteHelp.byteToInt(v_ByteData));
     }
     
 }

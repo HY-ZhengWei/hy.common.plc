@@ -32,6 +32,8 @@ import Moka7.S7Client;
  *              v1.2  2026-01-08  优化：日志输出逻辑，方便在《日志分析》页面上排查问题
  *              v1.3  2026-02-08  修正：超时时长从秒变为毫秒单位
  *              v1.4  2026-07-15  优化：异常时输出错误编码的含义
+ *              v1.5  2026-07-17  修正：读写多位节数据的异常
+ *              v1.6  2026-07-21  修正：1位BOOL数据，要读取8位现有数据（即一个byte），再交给setByteData改其中的1位，再写入8位数据
  */
 public class PlcIOS200 implements IPlcIO
 {
@@ -175,12 +177,49 @@ public class PlcIOS200 implements IPlcIO
                     PLCDataItemConfig v_Item     = v_KeyValue.getValue();
                     PLCAddress        v_PA       = new PLCAddress(v_Item.getRegisterNo() ,v_Item.getRegisterOffset());
                     Object            v_Value    = Help.getValueIgnoreCase(i_Datas ,v_KeyValue.getKey());
-                    byte []           v_ByteData = PLCByteData.setByteData(v_Item.getDataType() ,v_PA ,v_Value);
-                    int               v_Result   = this.plcConnect.WriteArea(v_PA.getRegisterType().getS200() 
-                                                                            ,v_PA.getRegisterNo()
-                                                                            ,v_PA.getOffsetByte() 
-                                                                            ,1
-                                                                            ,v_ByteData);
+                    byte []           v_ByteData = null;
+                    int               v_Result   = 0;
+                    
+                    if ( v_Item.getDataType().equals(PLCDataType.Bool) )
+                    {
+                        synchronized ( this )
+                        {
+                            // 1位BOOL数据，要读取8位现有数据（即一个byte），再交给setByteData改其中的1位，再写入8位数据
+                            v_ByteData = new byte[1];
+                            v_Result   = this.plcConnect.ReadArea(v_PA.getRegisterType().getS200() 
+                                                                   ,v_PA.getRegisterNo()
+                                                                   ,v_PA.getOffsetByte()
+                                                                   ,v_Item.getDataType().getAmount()
+                                                                   ,v_ByteData); 
+                            if ( v_Result != 0 )
+                            {
+                                $Logger.error("写前读PLC数据失败：" + v_KeyValue.getKey() + " " + v_Item.getName()
+                                            + "\n异常编码：" + v_Result + " = " + S7Client.ErrorText(v_Result)
+                                            + "\n寄存器名：" + v_Item.getRegisterType().getValue()
+                                            + "\n寄存编号：" + v_Item.getRegisterNo()
+                                            + "\n偏移数量：" + v_Item.getRegisterOffset()
+                                            + "\n数据类型：" + v_Item.getDataType().getValue());
+                                v_Ret = false;
+                                break;
+                            }
+                            
+                            v_ByteData = PLCByteData.setByteData(v_Item.getDataType() ,v_PA ,v_Value ,v_ByteData);
+                            v_Result   = this.plcConnect.WriteArea(v_PA.getRegisterType().getS200() 
+                                                                  ,v_PA.getRegisterNo()
+                                                                  ,v_PA.getOffsetByte() 
+                                                                  ,v_Item.getDataType().getAmount()
+                                                                  ,v_ByteData);
+                        }
+                    }
+                    else
+                    {
+                        v_ByteData = PLCByteData.setByteData(v_Item.getDataType() ,v_PA ,v_Value ,v_ByteData);
+                        v_Result   = this.plcConnect.WriteArea(v_PA.getRegisterType().getS200() 
+                                                              ,v_PA.getRegisterNo()
+                                                              ,v_PA.getOffsetByte() 
+                                                              ,v_Item.getDataType().getAmount()
+                                                              ,v_ByteData);
+                    }
                     if ( v_Result != 0 )
                     {
                         $Logger.error("写入PLC数据失败：" + v_KeyValue.getKey() + " " + v_Item.getName()
@@ -283,7 +322,7 @@ public class PlcIOS200 implements IPlcIO
                 int               v_Result   = this.plcConnect.ReadArea(v_PA.getRegisterType().getS200() 
                                                                        ,v_PA.getRegisterNo()
                                                                        ,v_PA.getOffsetByte()
-                                                                       ,1
+                                                                       ,v_Item.getDataType().getAmount()
                                                                        ,v_ByteData); 
                 if ( v_Result != 0 )
                 {

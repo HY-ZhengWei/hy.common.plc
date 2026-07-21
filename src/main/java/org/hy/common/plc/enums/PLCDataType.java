@@ -14,31 +14,31 @@ package org.hy.common.plc.enums;
 public enum PLCDataType
 {
     
-    Bool   ("DBool"   ,"BOOL"    ,"布尔"),
+    Bool   ("DBool"   ,"BOOL"    ,"布尔"           ,1),
                                  
-    Byte   ("DByte"   ,"BYTE"    ,"8位字节"),
+    Byte   ("DByte"   ,"BYTE"    ,"8位字节"        ,1),
                                  
-    Word   ("DWord"   ,"WORD"    ,"16位字"),
+    Word   ("DWord"   ,"WORD"    ,"16位字"         ,2),
                                  
-    DWord  ("DDWord"  ,"DWORD"   ,"32位双字"),
+    DWord  ("DDWord"  ,"DWORD"   ,"32位双字"       ,4),
                                  
-    SInt   ("DSInt"   ,"SINT"    ,"8位有符号整数"),
+    SInt   ("DSInt"   ,"SINT"    ,"8位有符号整数"   ,1),
                                  
-    USInt  ("DUSInt"  ,"USINT"   ,"8位无符号的整数"),
+    USInt  ("DUSInt"  ,"USINT"   ,"8位无符号的整数" ,1),
                                  
-    Int    ("DInt"    ,"INT"     ,"16位有符号整数"),
+    Int    ("DInt"    ,"INT"     ,"16位有符号整数"  ,2),
                                  
-    DInt   ("DDInt"   ,"DINT"    ,"32位有符号整数"),
+    DInt   ("DDInt"   ,"DINT"    ,"32位有符号整数"  ,4),
                                  
-    UDInt  ("DUDInt"  ,"UDINT"   ,"32位无符号整数"),
+    UDInt  ("DUDInt"  ,"UDINT"   ,"32位无符号整数"  ,4),
                                  
-    Real   ("DReal"   ,"REAL"    ,"32位浮点"),
+    Real   ("DReal"   ,"REAL"    ,"32位浮点"      ,4),
                                  
-    LReal  ("DLReal"  ,"LREAL"   ,"64位双精度浮点"),
+    LReal  ("DLReal"  ,"LREAL"   ,"64位双精度浮点" ,8),
     
-    String ("DString" ,"STRING"  ,"字符串Ascii"),
+    String ("DString" ,"STRING"  ,"字符串Ascii"   ,0),
     
-    WString("DString" ,"WSTRING" ,"字符串Unicode"),
+    WString("DString" ,"WSTRING" ,"字符串Unicode" ,0),
     
     ;
     
@@ -52,6 +52,9 @@ public enum PLCDataType
     
     /** 描述 */
     private String  comment;
+    
+    /** 所需的内存数量8位一个 */
+    private Integer amount;
     
     
     
@@ -117,11 +120,12 @@ public enum PLCDataType
     
     
     
-    PLCDataType(String i_Value ,String i_Code ,String i_Comment)
+    PLCDataType(String i_Value ,String i_Code ,String i_Comment ,int i_Amount)
     {
         this.value   = i_Value;
         this.code    = i_Code;
         this.comment = i_Comment;
+        this.amount  = i_Amount;
     }
 
     
@@ -145,7 +149,17 @@ public enum PLCDataType
         return this.comment;
     }
     
+
     
+    /**
+     * 获取：所需的内存数量8位一个
+     */
+    public Integer getAmount()
+    {
+        return amount;
+    }
+
+
 
     public String toString()
     {
