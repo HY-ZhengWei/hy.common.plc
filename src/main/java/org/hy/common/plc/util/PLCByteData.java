@@ -3,7 +3,6 @@ package org.hy.common.plc.util;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-import org.hy.common.ByteHelp;
 import org.hy.common.Help;
 import org.hy.common.plc.enums.PLCDataType;
 
@@ -84,10 +83,6 @@ public class PLCByteData
             
             v_ByteData = i_OrgByteData;
             S7.SetBitAt(v_ByteData ,0 ,i_PLCAddress.getOffsetBit() ,v_Value);
-            System.out.println("\n\n\n" + i_PLCAddress.getOffsetBit());
-            System.out.println(i_Value);
-            System.out.println(v_Value);
-            System.out.println(ByteHelp.byteToInt(v_ByteData) + "\n\n\n");
         }
         // 8位字节
         else if ( PLCDataType.Byte.equals(i_PLCDataType) )
