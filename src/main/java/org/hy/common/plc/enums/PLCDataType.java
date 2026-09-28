@@ -10,6 +10,7 @@ package org.hy.common.plc.enums;
  * @author      ZhengWei(HY)
  * @createDate  2024-05-14
  * @version     v1.0
+ *              v2.0  2026-09-21  添加：32位毫秒时间
  */
 public enum PLCDataType
 {
@@ -32,13 +33,15 @@ public enum PLCDataType
                                  
     UDInt  ("DUDInt"  ,"UDINT"   ,"32位无符号整数"  ,4),
                                  
-    Real   ("DReal"   ,"REAL"    ,"32位浮点"      ,4),
+    Real   ("DReal"   ,"REAL"    ,"32位浮点"       ,4),
                                  
-    LReal  ("DLReal"  ,"LREAL"   ,"64位双精度浮点" ,8),
+    LReal  ("DLReal"  ,"LREAL"   ,"64位双精度浮点"  ,8),
     
-    String ("DString" ,"STRING"  ,"字符串Ascii"   ,0),
+    String ("DString" ,"STRING"  ,"字符串Ascii"    ,0),
     
-    WString("DString" ,"WSTRING" ,"字符串Unicode" ,0),
+    WString("DString" ,"WSTRING" ,"字符串Unicode"  ,0),
+    
+    Time   ("DTime"   ,"TIME"    ,"32位毫秒时间"    ,4 ),
     
     ;
     
@@ -53,7 +56,7 @@ public enum PLCDataType
     /** 描述 */
     private String  comment;
     
-    /** 所需的内存数量8位一个 */
+    /** 所需的内存数量8位几个 */
     private Integer amount;
     
     
@@ -152,7 +155,7 @@ public enum PLCDataType
 
     
     /**
-     * 获取：所需的内存数量8位一个
+     * 获取：所需的内存数量8位几个
      */
     public Integer getAmount()
     {

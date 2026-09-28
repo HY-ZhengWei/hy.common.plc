@@ -36,6 +36,7 @@ import org.hy.common.xml.log.Logger;
  *              v1.2  2026-01-08  优化：日志输出逻辑，方便在《日志分析》页面上排查问题
  *              v1.3  2026-02-08  修正：超时时长从秒变为毫秒单位
  *              v2.0  2026-02-10  添加：连接池
+ *              v3.0  2026-09-21  添加：32位毫秒时间
  */
 public class PlcIO4X implements IPlcIO
 {
@@ -158,6 +159,41 @@ public class PlcIO4X implements IPlcIO
                                 + "\n数据类型：" + v_Item.getDataType().getValue());
                     v_Ret = false;
                     break;
+                }
+                else if ( PLCDataType.Time.equals(v_Item.getDataType()) )
+                {
+                    // 类型查看：S7PlcTagHandler s;
+                    // v_DataItemValue = PlcTIME.ofMilliseconds(((Integer) v_DataItemValue).longValue());
+                    
+                    if ( v_DataItemValue.getClass().equals(Integer.class)
+                      || v_DataItemValue.getClass().equals(int.class) )
+                    {
+                        v_DataItemValue = ((Integer) v_DataItemValue).longValue();
+                    }
+                    else if ( v_DataItemValue.getClass().equals(Long.class)
+                           || v_DataItemValue.getClass().equals(long.class) )
+                    {
+                        v_DataItemValue = ((Long) v_DataItemValue);
+                    }
+                    else if ( v_DataItemValue.getClass().equals(Float.class)
+                           || v_DataItemValue.getClass().equals(float.class) )
+                    {
+                        v_DataItemValue = ((Float) v_DataItemValue).longValue();
+                    }
+                    else if ( v_DataItemValue.getClass().equals(Double.class)
+                           || v_DataItemValue.getClass().equals(double.class) )
+                    {
+                        v_DataItemValue = ((Double) v_DataItemValue).longValue();
+                    }
+                    else if ( v_DataItemValue.getClass().equals(String.class) )
+                    {
+                        v_DataItemValue = Double.valueOf(v_DataItemValue.toString()).longValue();
+                    }
+                    else
+                    {
+                        v_Ret = false;
+                        throw new RuntimeException("未知类型 [" + v_DataItemValue.getClass().getName() + "] 转Time=" + v_DataItemValue.toString());
+                    }
                 }
                 
                 v_LogBuffer.append("PLC Write " + v_Item.getName() + v_Item.getCode() + "：" + v_PLCTagAddress + "=" + v_DataItemValue).append("\n");
@@ -398,13 +434,13 @@ public class PlcIO4X implements IPlcIO
             // 32位整数
             else if ( PLCDataType.DInt.equals(v_DataType) )
             {
-                Integer v_Value = i_PLCReadResponse.getInteger(i_ItemCode ,v_Index);
+                Long v_Value = i_PLCReadResponse.getLong(i_ItemCode ,v_Index);
                 return v_Value;
             }
             // 32位无符号整数
-            else if ( PLCDataType.UDInt.equals(i_DataType) )
+            else if ( PLCDataType.UDInt.equals(v_DataType) )
             {
-                Integer v_Value = i_PLCReadResponse.getInteger(i_ItemCode ,v_Index);
+                Long v_Value = i_PLCReadResponse.getLong(i_ItemCode ,v_Index);
                 return v_Value;
             }
             // 浮点
@@ -423,6 +459,12 @@ public class PlcIO4X implements IPlcIO
             else if ( PLCDataType.String.equals(v_DataType) )
             {
                 String v_Value = i_PLCReadResponse.getString(i_ItemCode ,v_Index);
+                return v_Value;
+            }
+            // 时间
+            else if ( PLCDataType.Time.equals(v_DataType) )
+            {
+                Long v_Value = i_PLCReadResponse.getLong(i_ItemCode ,v_Index);
                 return v_Value;
             }
         }

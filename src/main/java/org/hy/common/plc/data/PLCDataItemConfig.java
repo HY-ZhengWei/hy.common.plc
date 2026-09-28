@@ -103,7 +103,15 @@ public class PLCDataItemConfig
         v_Builder.append("%").append(this.registerType.getCode());
         v_Builder.append(this.registerNo);
         v_Builder.append(".").append(this.registerOffset.trim());
-        v_Builder.append(":").append(this.dataType.getCode());
+        
+        if ( PLCDataType.Time.equals(this.dataType) )
+        {
+            v_Builder.append(":DINT");
+        }
+        else
+        {
+            v_Builder.append(":").append(this.dataType.getCode());
+        }
         
         if (  PLCDataType.String .equals(this.dataType)
            || PLCDataType.WString.equals(this.dataType) ) 
@@ -274,6 +282,11 @@ public class PLCDataItemConfig
         {
             this.isNumber = true;
         }
+        // 32位毫秒时间
+        else if ( PLCDataType.Time.equals(this.dataType) )
+        {
+            this.isNumber = true;
+        }
         else
         {
             this.isNumber = false;
@@ -288,7 +301,7 @@ public class PLCDataItemConfig
     {
         return this.dataType == null ? null : this.dataType.getCode();
     }
-
+    
     
     /**
      * 设置：寄存器数据类型Code

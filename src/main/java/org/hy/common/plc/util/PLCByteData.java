@@ -455,6 +455,11 @@ public class PLCByteData
             // TODO 待用时再实现
             throw new RuntimeException("你可以去实现它了");
         }
+        // 32位毫秒时间
+        else if ( PLCDataType.Time.equals(i_PLCDataType) )
+        {
+            return S7.GetDIntAt(i_ByteData ,0);
+        }
         else
         {
             throw new RuntimeException("未知类型");

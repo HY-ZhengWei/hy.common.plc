@@ -34,7 +34,11 @@ public class JU_PLC
 
         try
         {
+            // 0.13.1 版本的写法
             PlcConnection v_PLCConn = PlcDriverManager.getDefault().getConnectionManager().getConnection(v_ConnString);
+            
+            // 1.0.0 版本的写法
+            // PlcConnection v_PLCConn = PlcDriverManager.getDefault().getConnectionFactory().getConnection(v_ConnString);
             
             // Check if this connection support reading of data.
             if ( !v_PLCConn.getMetadata().isReadSupported() )

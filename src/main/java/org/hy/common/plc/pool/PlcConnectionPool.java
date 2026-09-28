@@ -215,9 +215,17 @@ public class PlcConnectionPool
         {
             try
             {
+                // 0.13.1 版本的写法
                 PlcDriverManager     v_PlcDriverManager     = PlcDriverManager.getDefault();
                 PlcConnectionManager v_PlcConnectionManager = v_PlcDriverManager.getConnectionManager();
                 PlcConnection        v_PLCConn              = v_PlcConnectionManager.getConnection(makeConnectString(this.plcConfig));
+                
+                // 1.0.0 版本的写法
+                /*
+                PlcDriverManager     v_PlcDriverManager     = PlcDriverManager.getDefault();
+                org.apache.plc4x.java.api.PlcConnectionFactory v_PlcConnectionManager = v_PlcDriverManager.getConnectionFactory();
+                PlcConnection        v_PLCConn              = v_PlcConnectionManager.getConnection(makeConnectString(this.plcConfig));
+                */
                 
                 if ( !v_PLCConn.getMetadata().isReadSupported() )
                 {
