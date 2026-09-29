@@ -133,7 +133,6 @@ public class PlcIOS200 implements IPlcIO
             }
             
             String v_Titel = "PLC Write " + Help.NVL(this.plcConfig.getComment()) + this.plcConfig.getXid() + "." + Help.NVL(i_Datagram.getComment()) + i_Datagram.getXid();
-            $Logger.info(v_Titel);
             v_LogBuffer.append(v_Titel).append("\n");
             
             List<PLCDataItemConfig>        v_Items              = i_Datagram.getItems();
@@ -245,7 +244,6 @@ public class PlcIOS200 implements IPlcIO
         }
         
         $Logger.info(v_LogBuffer.toString());
-        
         return v_Ret;
     }
     
@@ -288,7 +286,6 @@ public class PlcIOS200 implements IPlcIO
             }
             
             String v_Titel = "PLC Read " + Help.NVL(this.plcConfig.getComment()) + this.plcConfig.getXid() + "." + Help.NVL(i_Datagram.getComment()) + i_Datagram.getXid();
-            $Logger.info(v_Titel);
             v_LogBuffer.append(v_Titel).append("\n");
             
             List<PLCDataItemConfig>        v_Items             = i_Datagram.getItems();
@@ -354,7 +351,6 @@ public class PlcIOS200 implements IPlcIO
         }
         
         $Logger.info(v_LogBuffer.toString());
-        
         return v_Datas;
     }
     
