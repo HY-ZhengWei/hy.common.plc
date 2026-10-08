@@ -618,7 +618,14 @@ public class IoTSetConfig extends NodeConfig implements NodeConfigBase
         String v_DeviceXID = null;
         try
         {
-            v_DeviceXID = this.getDeviceXID(i_Context);
+            if ( this.isMock(i_Context) )
+            {
+                v_DeviceXID = this.deviceXID;
+            }
+            else
+            {
+                v_DeviceXID = this.getDeviceXID(i_Context);
+            }
         }
         catch (Exception exce)
         {
