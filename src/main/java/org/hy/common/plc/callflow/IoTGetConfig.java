@@ -549,11 +549,11 @@ public class IoTGetConfig extends NodeConfig implements NodeConfigBase
             v_Builder.append(DBSQL.$Placeholder).append(this.returnID).append(" = ");
         }
         
-        boolean v_IsMock    = this.isMock(i_Context);
-        String  v_DeviceXID = null;
+        Return<String> v_IsMock    = this.isMock(i_Context);
+        String         v_DeviceXID = null;
         try
         {
-            if ( v_IsMock )
+            if ( v_IsMock.booleanValue() )
             {
                 v_DeviceXID = this.deviceXID;
             }
@@ -572,7 +572,7 @@ public class IoTGetConfig extends NodeConfig implements NodeConfigBase
         }
         else
         {
-            if ( v_IsMock || XJava.getObject(v_DeviceXID) != null )
+            if ( v_IsMock.booleanValue() || XJava.getObject(v_DeviceXID) != null )
             {
                 v_Builder.append(v_DeviceXID);
             }
@@ -587,7 +587,7 @@ public class IoTGetConfig extends NodeConfig implements NodeConfigBase
         String v_DatagramXID = null;
         try
         {
-            if ( v_IsMock )
+            if ( v_IsMock.booleanValue() )
             {
                 v_DatagramXID = this.datagramXID;
             }
@@ -606,7 +606,7 @@ public class IoTGetConfig extends NodeConfig implements NodeConfigBase
         }
         else
         {
-            if ( v_IsMock || XJava.getObject(v_DatagramXID) != null )
+            if ( v_IsMock.booleanValue() || XJava.getObject(v_DatagramXID) != null )
             {
                 v_Builder.append(v_DatagramXID);
             }
